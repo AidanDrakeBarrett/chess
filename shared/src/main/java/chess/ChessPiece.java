@@ -70,12 +70,59 @@ public class ChessPiece {
         return null;
     }
     private HashSet<ChessMove> pawnMoves(ChessBoard board, ChessPosition start) {
-        return null;
+        HashSet<ChessMove> moves = new HashSet<>();
+        if(color == ChessGame.TeamColor.WHITE) {
+            if(start.getRow() == 2) {
+                ChessPosition hurdle = new ChessPosition(3, start.getColumn());
+                if(board.getPiece(hurdle) == null) {
+                    ChessPosition doubleJump = new ChessPosition(4, start.getColumn());
+                    pawnMoveAdder(start, doubleJump, board, moves);
+                }
+            }
+            if(start.getRow() < 7) {
+                ChessPosition forward = new ChessPosition(start.getRow() + 1, start.getColumn());
+                pawnMoveAdder(start, forward, board, moves);
+            }
+            if(start.getRow() == 7) {
+                ChessPosition forward = new ChessPosition(start.getRow() + 1, start.getColumn());
+                if(board.getPiece(forward) == null) {
+                    pawnUpgrades(start, forward, moves);
+                }
+            }
+            whiteDiags(start, board, moves);
+        }
+        if(color == ChessGame.TeamColor.BLACK) {
+            if(start.getRow() == 7) {
+                ChessPosition hurdle = new ChessPosition(6, start.getColumn());
+                if(board.getPiece(hurdle) == null) {
+                    ChessPosition doubleJump = new ChessPosition(5, start.getColumn());
+                    pawnMoveAdder(start, doubleJump, board, moves);
+                }
+            }
+            if(start.getRow() > 2) {
+                ChessPosition forward = new ChessPosition(start.getRow() - 1, start.getColumn());
+                pawnMoveAdder(start, forward, board, moves);
+            }
+            if(start.getRow() == 2) {
+                ChessPosition forward = new ChessPosition(start.getRow() - 1, start.getColumn());
+                if(board.getPiece(forward) == null) {
+                    pawnUpgrades(start, forward, moves);
+                }
+            }
+            blackDiags(start, board, moves);
+        }
+        return moves;
     }
-    private void whiteDiags(ChessBoard board, ChessPosition start, HashSet<ChessMove> moves) {}
-    private void blackDiags(ChessBoard board, ChessPosition start, HashSet<ChessMove> moves) {}
+    private void whiteDiags(ChessPosition start, ChessBoard board, HashSet<ChessMove> moves) {}
+    private void blackDiags(ChessPosition start, ChessBoard board, HashSet<ChessMove> moves) {}
     private void pawnConfrontations(ChessPosition start, ChessPosition end, ChessBoard board, HashSet<ChessMove> moves) {}
-    private void pawnMoveAdder(ChessPosition start, ChessPosition end, HashSet<ChessMove> moves) {}
+    private void pawnMoveAdder(ChessPosition start, ChessPosition end, ChessBoard board, HashSet<ChessMove> moves) {
+        if(board.getPiece(end) == null) {
+            ChessMove newMove = new ChessMove(start, end);
+            moves.add(newMove);
+        }
+    }
+    private void pawnUpgrades(ChessPosition start, ChessPosition end, HashSet<ChessMove> moves) {}
     private HashSet<ChessMove> rookMoves(ChessBoard board, ChessPosition start) {
         return null;
     }

@@ -53,7 +53,21 @@ public class ChessPiece {
      * @return Collection of valid moves
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
-        throw new RuntimeException("Not implemented");
+        switch(type) {
+            case PAWN:
+                return pawnMoves(board, myPosition);
+            case ROOK:
+                return rookMoves(board, myPosition);
+            case KNIGHT:
+                return knightMoves(board, myPosition);
+            case BISHOP:
+                return bishopMoves(board, myPosition);
+            case QUEEN:
+                return queenMoves(board, myPosition);
+            case KING:
+                return kingMoves(board, myPosition);
+        }
+        return null;
     }
     private HashSet<ChessMove> pawnMoves(ChessBoard board, ChessPosition start) {
         return null;

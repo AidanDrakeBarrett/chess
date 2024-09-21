@@ -9,6 +9,7 @@ import java.util.Collection;
  * signature of the existing methods.
  */
 public class ChessGame {
+    private ChessBoard board = new ChessBoard();
 
     public ChessGame() {
 

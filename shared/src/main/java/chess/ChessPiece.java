@@ -162,24 +162,173 @@ public class ChessPiece {
         moves.add(upgrade4);
     }
     private HashSet<ChessMove> rookMoves(ChessBoard board, ChessPosition start) {
-        return null;
+        HashSet<ChessMove> moves = new HashSet<>();
+        for(int i = 1; i + start.getRow() <= 8; ++i) {
+            ChessPosition end = new ChessPosition(start.getRow() + i, start.getColumn());
+            boolean confrontation = moveAdder(start, end, board, moves);
+            if(confrontation) {
+                break;
+            }
+        }
+        for(int i = 1; start.getRow() - i >= 1; ++i) {
+            ChessPosition end = new ChessPosition(start.getRow() - i, start.getColumn());
+            boolean confrontation = moveAdder(start, end, board, moves);
+            if(confrontation) {
+                break;
+            }
+        }
+        for(int i = 1; i + start.getColumn() <= 8; ++i) {
+            ChessPosition end = new ChessPosition(start.getRow(), start.getColumn() + i);
+            boolean confrontation = moveAdder(start, end, board, moves);
+            if(confrontation) {
+                break;
+            }
+        }
+        for(int i = 1; start.getColumn() - i >= 1; ++i) {
+            ChessPosition end = new ChessPosition(start.getRow(), start.getColumn() - i);
+            boolean confrontation = moveAdder(start, end, board, moves);
+            if(confrontation) {
+                break;
+            }
+        }
+        return moves;
     }
     private HashSet<ChessMove> knightMoves(ChessBoard board, ChessPosition start) {
-        return null;
+        HashSet<ChessMove> moves = new HashSet<>();
+        if(start.getRow() + 2 <= 8) {
+            if(start.getColumn() - 1 >= 1) {
+                ChessPosition wheelSpoke = new ChessPosition(start.getRow() + 2, start.getColumn() - 1);
+                moveAdder(start, wheelSpoke, board, moves);
+            }
+            if(start.getColumn() + 1 <= 8) {
+                ChessPosition wheelSpoke = new ChessPosition(start.getRow() + 2, start.getColumn() + 1);
+                moveAdder(start, wheelSpoke, board, moves);
+            }
+        }
+        if(start.getRow() - 2 >= 1) {
+            if(start.getColumn() - 1 >= 1) {
+                ChessPosition wheelSpoke = new ChessPosition(start.getRow() - 2, start.getColumn() - 1);
+                moveAdder(start, wheelSpoke, board, moves);
+            }
+            if(start.getColumn() + 1 <= 8) {
+                ChessPosition wheelSpoke = new ChessPosition(start.getRow() - 2, start.getColumn() + 1);
+                moveAdder(start, wheelSpoke, board, moves);
+            }
+        }
+        if(start.getRow() + 1 <= 8) {
+            if(start.getColumn() - 2 >= 1) {
+                ChessPosition wheelSpoke = new ChessPosition(start.getRow() + 1, start.getColumn() - 2);
+                moveAdder(start, wheelSpoke, board, moves);
+            }
+            if(start.getColumn() + 2 <= 8) {
+                ChessPosition wheelSpoke = new ChessPosition(start.getRow() + 1, start.getColumn() + 2);
+                moveAdder(start, wheelSpoke, board, moves);
+            }
+        }
+        if(start.getRow() - 1 >= 1) {
+            if(start.getColumn() - 2 >= 1) {
+                ChessPosition wheelSpoke = new ChessPosition(start.getRow() - 1, start.getColumn() - 2);
+                moveAdder(start, wheelSpoke, board, moves);
+            }
+            if(start.getColumn() + 2 <= 8) {
+                ChessPosition wheelSpoke = new ChessPosition(start.getRow() - 1, start.getColumn() + 2);
+                moveAdder(start, wheelSpoke, board, moves);
+            }
+        }
+        return moves;
     }
     private HashSet<ChessMove> bishopMoves(ChessBoard board, ChessPosition start) {
-        return null;
+        HashSet<ChessMove> moves = new HashSet<>();
+        for(int i = 1; (start.getRow() + i <= 8) && (start.getColumn() + i <= 8); ++i) {
+            ChessPosition end = new ChessPosition(start.getRow() + i, start.getColumn() + i);
+            boolean confrontation = moveAdder(start, end, board, moves);
+            if(confrontation) {
+                break;
+            }
+        }
+        for(int i = 1; (start.getRow() + i <= 8) && (start.getColumn() - i >= 1); ++i) {
+            ChessPosition end = new ChessPosition(start.getRow() + i, start.getColumn() - i);
+            boolean confrontation = moveAdder(start, end, board, moves);
+            if(confrontation) {
+                break;
+            }
+        }
+        for(int i = 1; (start.getRow() - i >= 1) && (start.getColumn() + i <= 8); ++i) {
+            ChessPosition end = new ChessPosition(start.getRow() - i, start.getColumn() + i);
+            boolean confrontation = moveAdder(start, end, board, moves);
+            if(confrontation) {
+                break;
+            }
+        }
+        for(int i = 1; (start.getRow() - i >= 1) && (start.getColumn() - i >= 1); ++i) {
+            ChessPosition end = new ChessPosition(start.getRow() - i, start.getColumn() - i);
+            boolean confrontation = moveAdder(start, end, board, moves);
+            if(confrontation) {
+                break;
+            }
+        }
+        return moves;
     }
     private HashSet<ChessMove> queenMoves(ChessBoard board, ChessPosition start) {
-        return null;
+        HashSet<ChessMove> moves = new HashSet<>();
+        moves.addAll(rookMoves(board, start));
+        moves.addAll(bishopMoves(board, start));
+        return moves;
     }
     private HashSet<ChessMove> kingMoves(ChessBoard board, ChessPosition start) {
-        return null;
+        HashSet<ChessMove> moves = new HashSet<>();
+        if(start.getRow() + 1 <= 8) {
+            if(start.getColumn() - 1 >= 1) {
+                ChessPosition end = new ChessPosition(start.getRow() + 1, start.getColumn() - 1);
+                moveAdder(start, end, board, moves);
+            }
+            if(start.getColumn() + 1 <= 8) {
+                ChessPosition end = new ChessPosition(start.getRow() + 1, start.getColumn() + 1);
+                moveAdder(start, end, board, moves);
+            }
+            ChessPosition end = new ChessPosition(start.getRow() + 1, start.getColumn());
+            moveAdder(start, end, board, moves);
+        }
+        if(start.getRow() - 1 >= 1) {
+            if(start.getColumn() - 1 >= 1) {
+                ChessPosition end = new ChessPosition(start.getRow() - 1, start.getColumn() - 1);
+                moveAdder(start, end, board, moves);
+            }
+            if(start.getColumn() + 1 <= 8) {
+                ChessPosition end = new ChessPosition(start.getRow() - 1, start.getColumn() + 1);
+                moveAdder(start, end, board, moves);
+            }
+            ChessPosition end = new ChessPosition(start.getRow() - 1, start.getColumn());
+            moveAdder(start, end, board, moves);
+        }
+        if(start.getColumn() + 1 <= 8) {
+            ChessPosition end = new ChessPosition(start.getRow(), start.getColumn() + 1);
+            moveAdder(start, end, board, moves);
+        }
+        if(start.getColumn() - 1 >= 1) {
+            ChessPosition end = new ChessPosition(start.getRow(), start.getColumn() - 1);
+            moveAdder(start, end, board, moves);
+        }
+        return moves;
     }
     private boolean moveAdder(ChessPosition start, ChessPosition end, ChessBoard board, HashSet<ChessMove> moves) {
-        return false;
+        boolean confrontation = false;
+        if(board.getPiece(end) == null) {
+            ChessMove possibleMove = new ChessMove(start, end);
+            moves.add(possibleMove);
+        }
+        if(board.getPiece(end) != null) {
+            pieceConfrontations(start, end, board, moves);
+            confrontation = true;
+        }
+        return confrontation;
     }
-    private void pieceConfrontations(ChessPosition start, ChessPosition end, ChessBoard board, HashSet<ChessMove> moves) {}
+    private void pieceConfrontations(ChessPosition start, ChessPosition end, ChessBoard board, HashSet<ChessMove> moves) {
+        if(board.getPiece(end).getTeamColor() != color) {
+            ChessMove kill = new ChessMove(start, end);
+            moves.add(kill);
+        }
+    }
 
     @Override
     public boolean equals(Object o) {

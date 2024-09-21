@@ -113,16 +113,54 @@ public class ChessPiece {
         }
         return moves;
     }
-    private void whiteDiags(ChessPosition start, ChessBoard board, HashSet<ChessMove> moves) {}
-    private void blackDiags(ChessPosition start, ChessBoard board, HashSet<ChessMove> moves) {}
-    private void pawnConfrontations(ChessPosition start, ChessPosition end, ChessBoard board, HashSet<ChessMove> moves) {}
+    private void whiteDiags(ChessPosition start, ChessBoard board, HashSet<ChessMove> moves) {
+        if(start.getColumn() > 1) {
+            ChessPosition leftDiag = new ChessPosition(start.getRow() + 1, start.getColumn() - 1);
+            pawnConfrontations(start, leftDiag, board, moves);
+        }
+        if(start.getColumn() < 8) {
+            ChessPosition rightDiag = new ChessPosition(start.getRow() + 1, start.getColumn() + 1);
+            pawnConfrontations(start, rightDiag, board, moves);
+        }
+    }
+    private void blackDiags(ChessPosition start, ChessBoard board, HashSet<ChessMove> moves) {
+        if(start.getColumn() > 1) {
+            ChessPosition leftDiag = new ChessPosition(start.getRow() - 1, start.getColumn() - 1);
+            pawnConfrontations(start, leftDiag, board, moves);
+        }
+        if(start.getColumn() < 8) {
+            ChessPosition rightDiag = new ChessPosition(start.getRow() - 1, start.getColumn() + 1);
+            pawnConfrontations(start, rightDiag, board, moves);
+        }
+    }
+    private void pawnConfrontations(ChessPosition start, ChessPosition end, ChessBoard board, HashSet<ChessMove> moves) {
+        if(board.getPiece(end) != null) {
+            if(board.getPiece(end).getTeamColor() != color) {
+                if(end.getRow() == 8 || end.getRow() == 1) {
+                    pawnUpgrades(start, end, moves);
+                    return;
+                }
+                ChessMove kill = new ChessMove(start, end);
+                moves.add(kill);
+            }
+        }
+    }
     private void pawnMoveAdder(ChessPosition start, ChessPosition end, ChessBoard board, HashSet<ChessMove> moves) {
         if(board.getPiece(end) == null) {
             ChessMove newMove = new ChessMove(start, end);
             moves.add(newMove);
         }
     }
-    private void pawnUpgrades(ChessPosition start, ChessPosition end, HashSet<ChessMove> moves) {}
+    private void pawnUpgrades(ChessPosition start, ChessPosition end, HashSet<ChessMove> moves) {
+        ChessMove upgrade1 = new ChessMove(start, end, PieceType.ROOK);
+        ChessMove upgrade2 = new ChessMove(start, end, PieceType.KNIGHT);
+        ChessMove upgrade3 = new ChessMove(start, end, PieceType.BISHOP);
+        ChessMove upgrade4 = new ChessMove(start, end, PieceType.QUEEN);
+        moves.add(upgrade1);
+        moves.add(upgrade2);
+        moves.add(upgrade3);
+        moves.add(upgrade4);
+    }
     private HashSet<ChessMove> rookMoves(ChessBoard board, ChessPosition start) {
         return null;
     }

@@ -201,7 +201,20 @@ public class ChessGame {
      * @return True if the specified team is in stalemate, otherwise false
      */
     public boolean isInStalemate(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        for(int i = 1; i <= 8; ++i) {
+            for(int j = 1; j <= 8; ++j) {
+                ChessPosition stalePos = new ChessPosition(i, j);
+                if(board.getPiece(stalePos) != null) {
+                    if(board.getPiece(stalePos).getTeamColor() == teamColor) {
+                        HashSet<ChessMove> goodMoves = (HashSet<ChessMove>) validMoves(stalePos);
+                        if(!goodMoves.isEmpty()) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     /**
@@ -210,7 +223,7 @@ public class ChessGame {
      * @param board the new board to use
      */
     public void setBoard(ChessBoard board) {
-        throw new RuntimeException("Not implemented");
+        this.board = board;
     }
 
     /**
@@ -219,6 +232,6 @@ public class ChessGame {
      * @return the chessboard
      */
     public ChessBoard getBoard() {
-        throw new RuntimeException("Not implemented");
+        return board;
     }
 }

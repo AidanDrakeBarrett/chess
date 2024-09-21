@@ -138,7 +138,44 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        int kingRow = 0;
+        int kingCol = 0;
+        for(int i = 1; i <= 8; ++i) {
+            boolean foundKing = false;
+            for(int j = 1; j <= 8; ++j) {
+                ChessPosition kingPos = new ChessPosition(i, j);
+                if(board.getPiece(kingPos) != null) {
+                    if(board.getPiece(kingPos).getPieceType() == ChessPiece.PieceType.KING) {
+                        if(board.getPiece(kingPos).getTeamColor() == teamColor) {
+                            kingRow = i;
+                            kingCol = j;
+                            foundKing = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if(foundKing) {
+                break;
+            }
+        }
+        ChessPosition kingPos = new ChessPosition(kingRow, kingCol);
+        for(int i = 1; i <= 8; ++i) {
+            for(int j = 1; j <= 8; ++j) {
+                ChessPosition checkPos = new ChessPosition(i, j);
+                if(board.getPiece(checkPos) != null) {
+                    if(board.getPiece(checkPos).getTeamColor() != teamColor) {
+                        HashSet<ChessMove> moves = (HashSet<ChessMove>) board.getPiece(checkPos).pieceMoves(board, checkPos);
+                        for(ChessMove move:moves) {
+                            if(move.getEndPosition().equals(kingPos)) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -148,7 +185,12 @@ public class ChessGame {
      * @return True if the specified team is in checkmate
      */
     public boolean isInCheckmate(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        if(isInCheck(teamColor)) {
+            if(isInStalemate(teamColor)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

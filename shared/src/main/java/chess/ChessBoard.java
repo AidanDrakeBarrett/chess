@@ -11,7 +11,7 @@ public class ChessBoard {
     private ChessPiece[][] board = new ChessPiece[8][8];
 
     public ChessBoard() {
-        
+
     }
 
     /**
@@ -84,7 +84,7 @@ public class ChessBoard {
         board[0][3] = whiteQueen;
 
         ChessPiece blackKing = new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.KING);
-        ChessPiece whiteKing = new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.KING);
+        ChessPiece whiteKing = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.KING);
         board[7][4] = blackKing;
         board[0][4] = whiteKing;
     }

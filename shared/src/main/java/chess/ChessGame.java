@@ -1,6 +1,7 @@
 package chess;
 
 import java.util.Collection;
+import java.util.HashSet;
 
 /**
  * For a class that can manage a chess game, making moves on a board
@@ -10,16 +11,17 @@ import java.util.Collection;
  */
 public class ChessGame {
     private ChessBoard board = new ChessBoard();
+    private TeamColor teamTurn;
 
     public ChessGame() {
-
+        board.resetBoard();
     }
 
     /**
      * @return Which team's turn it is
      */
     public TeamColor getTeamTurn() {
-        throw new RuntimeException("Not implemented");
+        return teamTurn;
     }
 
     /**
@@ -28,7 +30,7 @@ public class ChessGame {
      * @param team the team whose turn it is
      */
     public void setTeamTurn(TeamColor team) {
-        throw new RuntimeException("Not implemented");
+        teamTurn = team;
     }
 
     /**
@@ -47,7 +49,41 @@ public class ChessGame {
      * startPosition
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
-        throw new RuntimeException("Not implemented");
+        if(board.getPiece(startPosition) == null) {
+            return null;
+        }
+
+        HashSet<ChessMove> possibleMoves
+                = (HashSet<ChessMove>) board.getPiece(startPosition).pieceMoves(board, startPosition);
+        HashSet<ChessMove> returnableMoves = new HashSet<>();
+        for(ChessMove move:possibleMoves) {
+            ChessBoard boardCopy = boardCloner();
+            ChessPosition possibleEnd = move.getEndPosition();
+            ChessPiece movingPiece = boardCopy.getPiece(startPosition);
+            board.addPiece(possibleEnd, movingPiece);
+            board.addPiece(startPosition, null);
+            TeamColor checkingColor = board.getPiece(possibleEnd).getTeamColor();
+            if(!isInCheck(checkingColor)) {
+                returnableMoves.add(move);
+            }
+            board = boardCopy;
+        }
+        return returnableMoves;
+    }
+    private ChessBoard boardCloner() {
+        ChessBoard copyBoard = new ChessBoard();
+        for(int i = 1; i <= 8; ++i) {
+            for(int j = 1; j <= 8; ++j) {
+                ChessPosition copyPosition = new ChessPosition(i, j);
+                if(board.getPiece(copyPosition) != null) {
+                    TeamColor copyColor = board.getPiece(copyPosition).getTeamColor();
+                    ChessPiece.PieceType copyType = board.getPiece(copyPosition).getPieceType();
+                    ChessPiece copyPiece = new ChessPiece(copyColor, copyType);
+                    copyBoard.addPiece(copyPosition, copyPiece);
+                }
+            }
+        }
+        return copyBoard;
     }
 
     /**

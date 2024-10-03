@@ -12,9 +12,11 @@ import java.util.HashSet;
 public class ChessGame {
     private ChessBoard board = new ChessBoard();
     private TeamColor teamTurn;
+    private boolean checkmateOccurred = false;
 
     public ChessGame() {
         board.resetBoard();
+        teamTurn = TeamColor.WHITE;
     }
 
     /**
@@ -187,6 +189,7 @@ public class ChessGame {
     public boolean isInCheckmate(TeamColor teamColor) {
         if(isInCheck(teamColor)) {
             if(isInStalemate(teamColor)) {
+                checkmateOccurred = true;
                 return true;
             }
         }
@@ -201,20 +204,21 @@ public class ChessGame {
      * @return True if the specified team is in stalemate, otherwise false
      */
     public boolean isInStalemate(TeamColor teamColor) {
+        if(checkmateOccurred) {
+            return false;
+        }
+        HashSet<ChessMove> goodMoves = new HashSet<>();
         for(int i = 1; i <= 8; ++i) {
             for(int j = 1; j <= 8; ++j) {
                 ChessPosition stalePos = new ChessPosition(i, j);
                 if(board.getPiece(stalePos) != null) {
                     if(board.getPiece(stalePos).getTeamColor() == teamColor) {
-                        HashSet<ChessMove> goodMoves = (HashSet<ChessMove>) validMoves(stalePos);
-                        if(!goodMoves.isEmpty()) {
-                            return false;
-                        }
+                        goodMoves.addAll(validMoves(stalePos));
                     }
                 }
             }
         }
-        return true;
+        return goodMoves.isEmpty();
     }
 
     /**

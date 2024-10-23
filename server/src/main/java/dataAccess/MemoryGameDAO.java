@@ -63,15 +63,6 @@ public class MemoryGameDAO implements GameDAO {
     public Collection<AbbreviatedGameData> listGames() {
         ArrayList<AbbreviatedGameData> games = new ArrayList<>();
         for(GameData game:gameDataArrayList) {
-            /*String abbrevBlack = game.blackUsername();
-            String abbrevWhite = game.whiteUsername();
-            if(game.blackUsername() == null) {
-                abbrevBlack = null;
-            }
-            if(game.whiteUsername() == null) {
-                abbrevWhite = null;
-            }
-            AbbreviatedGameData smallGame = new AbbreviatedGameData(game.gameID(), abbrevWhite, abbrevBlack, game.gameName());*/
             AbbreviatedGameData smallGame = new AbbreviatedGameData(game.gameID(), game.whiteUsername(), game.blackUsername(), game.gameName());
             games.add(smallGame);
         }

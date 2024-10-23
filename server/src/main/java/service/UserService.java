@@ -1,7 +1,7 @@
 package service;
 
 import data.access.*;
-import dataAccess.*;
+import data.access.*;
 import server.ResponseException;
 
 public class UserService {

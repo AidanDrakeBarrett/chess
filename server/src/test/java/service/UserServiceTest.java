@@ -4,7 +4,7 @@ import data.access.DataAccessException;
 import data.access.MemoryAuthDAO;
 import data.access.MemoryUserDAO;
 import data.access.UserData;
-import dataAccess.*;
+import data.access.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import server.ResponseException;

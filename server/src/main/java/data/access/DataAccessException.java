@@ -1,4 +1,4 @@
-package dataAccess;
+package data.access;
 
 /**
  * Indicates there was an error connecting to the database

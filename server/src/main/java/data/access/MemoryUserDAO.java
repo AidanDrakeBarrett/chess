@@ -1,4 +1,4 @@
-package dataAccess;
+package data.access;
 
 import java.util.HashSet;
 import java.util.Objects;

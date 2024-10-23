@@ -1,7 +1,7 @@
 package server;
 
 import com.google.gson.Gson;
-import dataAccess.AbbreviatedGameData;
+import data.access.AbbreviatedGameData;
 import service.GamesService;
 import spark.Request;
 import spark.Response;

@@ -1,14 +1,13 @@
 package service;
 
 import chess.ChessGame;
-import dataAccess.AbbreviatedGameData;
-import dataAccess.MemoryAuthDAO;
-import dataAccess.MemoryGameDAO;
+import data.access.AbbreviatedGameData;
+import data.access.MemoryAuthDAO;
+import data.access.MemoryGameDAO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import server.ResponseException;
-import service.GamesService;
 
 import java.util.ArrayList;
 

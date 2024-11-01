@@ -1,4 +1,4 @@
-package data.access;
+package dataaccess;
 
 public interface UserDAO {
     void clearData();

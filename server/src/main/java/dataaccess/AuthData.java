@@ -1,4 +1,4 @@
-package data.access;
+package dataaccess;
 
 public record AuthData(String username, String authToken) {
 }

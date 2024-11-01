@@ -1,10 +1,10 @@
 package service;
 
 import chess.ChessGame;
-import data.access.AbbreviatedGameData;
-import data.access.DataAccessException;
-import data.access.MemoryAuthDAO;
-import data.access.MemoryGameDAO;
+import dataaccess.access.AbbreviatedGameData;
+import dataaccess.DataAccessException;
+import dataaccess.MemoryAuthDAO;
+import dataaccess.MemoryGameDAO;
 import server.ResponseException;
 
 import java.util.Collection;

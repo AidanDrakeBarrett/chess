@@ -1,8 +1,8 @@
 package service;
 
-import data.access.MemoryAuthDAO;
-import data.access.MemoryGameDAO;
-import data.access.MemoryUserDAO;
+import dataaccess.MemoryAuthDAO;
+import dataaccess.MemoryGameDAO;
+import dataaccess.MemoryUserDAO;
 
 public class ClearAppService {
     private static MemoryAuthDAO authDAO = new MemoryAuthDAO();

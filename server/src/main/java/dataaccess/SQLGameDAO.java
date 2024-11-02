@@ -87,17 +87,20 @@ public class SQLGameDAO implements GameDAO{
                 String columnLabel = null;
                 if(clientColor == ChessGame.TeamColor.WHITE) {
                     columnLabel = "whiteUsername";
+                    statement = """
+                        SELECT whiteUsername FROM GameData
+                        WHERE id = ?;
+                        """;
                 }
                 if(clientColor == ChessGame.TeamColor.BLACK) {
                     columnLabel = "blackUsername";
-                }
-                statement = """
-                        SELECT ? FROM GameData
+                    statement = """
+                        SELECT blackUsername FROM GameData
                         WHERE id = ?;
                         """;
+                }
                 try(var preparedStatement = conn.prepareStatement(statement)) {
-                    preparedStatement.setString(1, columnLabel);
-                    preparedStatement.setInt(2, gameID);
+                    preparedStatement.setInt(1, gameID);
                     var rs = preparedStatement.executeQuery();
                     String currentPlayer = null;
                     while(rs.next()) {
@@ -115,13 +118,15 @@ public class SQLGameDAO implements GameDAO{
     }
     private void playerInserter(String username, String colorColumn, int gameID, Connection conn) throws SQLException {
         var statement = """
-                UPDATE GameData SET ? = ?
-                WHERE id = ?;
+                UPDATE GameData SET
+                """
+                + colorColumn +
+                """
+                 = ? WHERE id = ?;
                 """;
         try(var preparedStatement = conn.prepareStatement(statement)) {
-            preparedStatement.setString(1, colorColumn);
-            preparedStatement.setString(2, username);
-            preparedStatement.setInt(3, gameID);
+            preparedStatement.setString(1, username);
+            preparedStatement.setInt(2, gameID);
             preparedStatement.executeUpdate();
         }
     }

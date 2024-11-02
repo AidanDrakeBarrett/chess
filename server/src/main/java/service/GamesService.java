@@ -3,16 +3,16 @@ package service;
 import chess.ChessGame;
 import dataaccess.AbbreviatedGameData;
 import dataaccess.DataAccessException;
-import dataaccess.MemoryAuthDAO;
-import dataaccess.MemoryGameDAO;
+import dataaccess.SQLAuthDAO;
+import dataaccess.SQLGameDAO;
 import server.ResponseException;
 
 import java.util.Collection;
 import java.util.Objects;
 
 public class GamesService {
-    private static MemoryAuthDAO authDAO = new MemoryAuthDAO();
-    private static MemoryGameDAO gameDAO = new MemoryGameDAO();
+    private static SQLAuthDAO authDAO = new SQLAuthDAO();
+    private static SQLGameDAO gameDAO = new SQLGameDAO();
 
     public GamesService() {}
     public static Collection<AbbreviatedGameData> listGames(String authToken) throws ResponseException {

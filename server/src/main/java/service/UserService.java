@@ -4,8 +4,8 @@ import dataaccess.*;
 import server.ResponseException;
 
 public class UserService {
-    private static MemoryUserDAO userDAO = new MemoryUserDAO();
-    private static MemoryAuthDAO authDAO = new MemoryAuthDAO();
+    private static SQLUserDAO userDAO = new SQLUserDAO();
+    private static SQLAuthDAO authDAO = new SQLAuthDAO();
 
     public UserService() {}
     public AuthData register(UserData newUser) throws ResponseException {

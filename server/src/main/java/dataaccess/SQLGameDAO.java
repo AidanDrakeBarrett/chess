@@ -11,10 +11,24 @@ import java.sql.*;
 import java.util.HashSet;
 import java.util.Objects;
 
+import static dataaccess.DatabaseConfigurer.configureDatabase;
+
 public class SQLGameDAO implements GameDAO{
+    private final String[] createStatements = {
+            """
+            CREATE TABLE IF NOT EXISTS GameData(
+                id INT NOT NULL AUTO_INCREMENT,
+                whiteUsername VARCHAR(255),
+                blackUsername VARCHAR(255),
+                gameName VARCHAR(255) NOT NULL,
+                chessGame VARCHAR(2047) NOT NULL,
+                PRIMARY KEY (id)
+                );
+            """
+    };
     public SQLGameDAO() {
         try {
-            configureDatabase();
+            DatabaseConfigurer.configureDatabase(createStatements);
         } catch(ResponseException e) {}
         catch(DataAccessException e) {}
     }
@@ -189,32 +203,7 @@ public class SQLGameDAO implements GameDAO{
                     return games;
                 } catch(SQLException e) {}
             } catch(SQLException e) {}
-        } catch(SQLException e) {}
-        catch(DataAccessException e) {}
+        } catch(SQLException | DataAccessException e) {}
         return null;
-    }
-    private final String[] createStatements = {
-            """
-            CREATE TABLE IF NOT EXISTS GameData(
-                id INT NOT NULL AUTO_INCREMENT,
-                whiteUsername VARCHAR(255),
-                blackUsername VARCHAR(255),
-                gameName VARCHAR(255) NOT NULL,
-                chessGame VARCHAR(2047) NOT NULL,
-                PRIMARY KEY (id)
-                );
-            """
-    };
-    private void configureDatabase() throws ResponseException, DataAccessException {
-        DatabaseManager.createDatabase();
-        try(var conn = DatabaseManager.getConnection()) {
-            for(var statement:createStatements) {
-                try(var preparedStatement = conn.prepareStatement(statement)) {
-                    preparedStatement.executeUpdate();
-                }
-            }
-        } catch(SQLException e) {
-            throw new ResponseException(500, String.format("Unable to configure database: %s", e.getMessage()));
-        }
     }
 }

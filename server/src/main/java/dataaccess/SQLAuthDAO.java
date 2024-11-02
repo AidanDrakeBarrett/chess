@@ -2,14 +2,24 @@ package dataaccess;
 
 import server.ResponseException;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
 import java.util.UUID;
 
 public class SQLAuthDAO implements AuthDAO {
+    private final String[] createStatements = {
+            """
+            CREATE TABLE IF NOT EXISTS AuthData (
+                username VARCHAR(255) NOT NULL,
+                authToken VARCHAR(255) NOT NULL,
+                PRIMARY KEY (authToken)
+            );
+            """
+    };
     public SQLAuthDAO() {
         try {
-            configureDatabase();
+            DatabaseConfigurer.configureDatabase(createStatements);
         } catch(ResponseException resEx) {}
         catch(DataAccessException e) {}
     }
@@ -33,11 +43,7 @@ public class SQLAuthDAO implements AuthDAO {
             try(var preparedStatement = conn.prepareStatement(statement)) {
                 preparedStatement.setString(1, userAuth);
                 try(var rs = preparedStatement.executeQuery()) {
-                    while(rs.next()) {
-                        if(Objects.equals(rs.getString("authToken"), userAuth)) {
-                            return true;
-                        }
-                    }
+                    return authResultSetProcessing(rs, userAuth);
                 } catch(SQLException e) {
                     throw new DataAccessException("");
                 }
@@ -46,6 +52,13 @@ public class SQLAuthDAO implements AuthDAO {
             }
         } catch(SQLException e) {
             throw new DataAccessException("Error: unauthorized");
+        }
+    }
+    private boolean authResultSetProcessing(ResultSet rs, String userAuth) throws DataAccessException, SQLException {
+        while(rs.next()) {
+            if(Objects.equals(rs.getString("authToken"), userAuth)) {
+                return true;
+            }
         }
         throw new DataAccessException("Error: unauthorized");
     }
@@ -101,29 +114,7 @@ public class SQLAuthDAO implements AuthDAO {
                     return authorizedUser;
                 } catch(SQLException e) {}
             } catch(SQLException e) {}
-        } catch(SQLException e) {}
-        catch(DataAccessException e) {}
+        } catch(SQLException | DataAccessException e) {}
         return null;
-    }
-    private final String[] createStatements = {
-            """
-            CREATE TABLE IF NOT EXISTS AuthData (
-                username VARCHAR(255) NOT NULL,
-                authToken VARCHAR(255) NOT NULL,
-                PRIMARY KEY (authToken)
-            );
-            """
-    };
-    private void configureDatabase() throws ResponseException, DataAccessException {
-        DatabaseManager.createDatabase();
-        try(var conn = DatabaseManager.getConnection()) {
-            for(var statement:createStatements) {
-                try(var preparedStatement = conn.prepareStatement(statement)) {
-                    preparedStatement.executeUpdate();
-                }
-            }
-        } catch(SQLException e) {
-            throw new ResponseException(500, String.format("Unable to configure database: %s", e.getMessage()));
-        }
     }
 }

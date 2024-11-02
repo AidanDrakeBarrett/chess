@@ -7,9 +7,19 @@ import java.sql.*;
 import java.util.Objects;
 
 public class SQLUserDAO implements UserDAO {
+    private final String[] createStatements = {
+            """
+            CREATE TABLE IF NOT EXISTS UserData(
+                username VARCHAR(255) NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                email VARCHAR(255) NOT NULL,
+                PRIMARY KEY (username)
+            );
+            """
+    };
     public SQLUserDAO() {
         try {
-            configureDatabase();
+            DatabaseConfigurer.configureDatabase(createStatements);
         } catch(ResponseException e) {}
         catch(DataAccessException e) {}
     }
@@ -101,29 +111,6 @@ public class SQLUserDAO implements UserDAO {
                 preparedStatement.setString(3, email);
                 preparedStatement.executeUpdate();
             } catch(SQLException e) {}
-        } catch(SQLException e) {}
-        catch(DataAccessException e) {}
-    }
-    private final String[] createStatements = {
-            """
-            CREATE TABLE IF NOT EXISTS UserData(
-                username VARCHAR(255) NOT NULL,
-                password VARCHAR(255) NOT NULL,
-                email VARCHAR(255) NOT NULL,
-                PRIMARY KEY (username)
-            );
-            """
-    };
-    private void configureDatabase() throws ResponseException, DataAccessException {
-        DatabaseManager.createDatabase();
-        try(var conn = DatabaseManager.getConnection()) {
-            for(var statement:createStatements) {
-                try(var preparedStatement = conn.prepareStatement(statement)) {
-                    preparedStatement.executeUpdate();
-                }
-            }
-        } catch(SQLException ex) {
-            throw new ResponseException(500, String.format("Unable to configure database: %s", ex.getMessage()));
-        }
+        } catch(SQLException | DataAccessException e) {}
     }
 }

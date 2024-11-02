@@ -143,28 +143,11 @@ public class ChessGame {
         int kingRow = 0;
         int kingCol = 0;
         for(int i = 1; i <= 8; ++i) {
-            kingCol = evadingTheStupidNestingRuleInTheRubric(i, teamColor);
+            kingCol = kingColCalculator(i, teamColor);
             if(kingCol > 0) {
                 kingRow = i;
                 break;
             }
-            /*boolean foundKing = false;
-            for(int j = 1; j <= 8; ++j) {
-                ChessPosition kingPos = new ChessPosition(i, j);
-                if(board.getPiece(kingPos) != null) {
-                    if(board.getPiece(kingPos).getPieceType() == ChessPiece.PieceType.KING) {
-                        if(board.getPiece(kingPos).getTeamColor() == teamColor) {
-                            kingRow = i;
-                            kingCol = j;
-                            foundKing = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            if(foundKing) {
-                break;
-            }*/
         }
         ChessPosition kingPos = new ChessPosition(kingRow, kingCol);
         boolean check = false;
@@ -174,12 +157,7 @@ public class ChessGame {
                 if(board.getPiece(checkPos) != null) {
                     if(board.getPiece(checkPos).getTeamColor() != teamColor) {
                         HashSet<ChessMove> moves = (HashSet<ChessMove>) board.getPiece(checkPos).pieceMoves(board, checkPos);
-                        check = evadingTheStupidNestingRuleInTheRubricPartII(kingPos, moves);
-                        /*for(ChessMove move:moves) {
-                            if(move.getEndPosition().equals(kingPos)) {
-                                return true;
-                            }
-                        }*/
+                        check = kingKillCalculator(kingPos, moves);
                     }
                     if(check) {
                         break;
@@ -192,7 +170,7 @@ public class ChessGame {
         }
         return check;
     }
-    int evadingTheStupidNestingRuleInTheRubric(int i, TeamColor teamColor) {
+    int kingColCalculator(int i, TeamColor teamColor) {
         boolean foundKing = false;
         int kingCol = 0;
         for(int j = 1; j <= 8; ++j) {
@@ -212,7 +190,7 @@ public class ChessGame {
         }
         return 0;
     }
-    boolean evadingTheStupidNestingRuleInTheRubricPartII(ChessPosition kingPos, HashSet<ChessMove> moves) {
+    boolean kingKillCalculator(ChessPosition kingPos, HashSet<ChessMove> moves) {
         for(ChessMove move:moves) {
             if(move.getEndPosition().equals(kingPos)) {
                 return true;

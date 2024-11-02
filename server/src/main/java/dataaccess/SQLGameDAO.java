@@ -157,13 +157,66 @@ public class SQLGameDAO implements GameDAO{
     @Override
     public int createGame(String gameName) {
         try(var conn = DatabaseManager.getConnection()) {
-
-        }
+            ChessGame game = new ChessGame();
+            var gameJson = new Gson().toJson(game);
+            HashSet<String> spectators = new HashSet<>();
+            var spectatorJson = new Gson().toJson(spectators);
+            var statement = """
+                    INSERT INTO GameData
+                    (gameName, chessGame, spectators)
+                    VALUES(?, ?, ?);
+                    """;
+            try(var preparedStatement = conn.prepareStatement(statement)) {
+                preparedStatement.setString(1, gameName);
+                preparedStatement.setString(2, gameJson);
+                preparedStatement.setString(3, spectatorJson);
+                preparedStatement.executeUpdate();
+                return newGameIDQuery(gameName, conn);
+            } catch(SQLException e) {}
+        } catch(SQLException e) {}
+        catch(DataAccessException e) {}
         return 0;
+    }
+    private int newGameIDQuery(String gameName, Connection conn) throws SQLException {
+        String statement = """
+                SELECT id FROM GameData
+                WHERE gameName = ?;
+                """;
+        try(var preparedStatement = conn.prepareStatement(statement)) {
+            preparedStatement.setString(1, gameName);
+            var rs = preparedStatement.executeQuery();
+            int newID = 0;
+            while(rs.next()) {
+                if(newID < rs.getInt("id")) {
+                    newID = rs.getInt("id");
+                }
+            }
+            return newID;
+        }
     }
 
     @Override
     public Collection<AbbreviatedGameData> listGames() {
+        try(var conn = DatabaseManager.getConnection()) {
+            ArrayList<AbbreviatedGameData> games = new ArrayList<>();
+            var statement = """
+                    SELECT * FROM GameData;
+                    """;
+            try(var preparedStatement = conn.prepareStatement(statement)) {
+                try(var rs = preparedStatement.executeQuery()) {
+                    while(rs.next()) {
+                        int id = rs.getInt("id");
+                        String whiteUsername = rs.getString("whiteUsername");
+                        String blackUsername = rs.getString("blackUsername");
+                        String gameName = rs.getString("gameName");
+                        AbbreviatedGameData nextGame = new AbbreviatedGameData(id, whiteUsername, blackUsername, gameName);
+                        games.add(nextGame);
+                    }
+                    return games;
+                } catch(SQLException e) {}
+            } catch(SQLException e) {}
+        } catch(SQLException e) {}
+        catch(DataAccessException e) {}
         return null;
     }
     private final String[] createStatements = {

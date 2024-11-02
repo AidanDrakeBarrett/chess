@@ -63,8 +63,11 @@ public class SQLUserDAO implements UserDAO {
                 preparedStatement.setString(1, username);
                 try(var rs = preparedStatement.executeQuery()) {
                     String queriedPassword = null;
-                    while(rs.next()) {
+                    if(rs.next()) {
                         queriedPassword = rs.getString("password");
+                    }
+                    if(queriedPassword == null) {
+                        throw new DataAccessException("");
                     }
                     if(BCrypt.checkpw(login.password(), queriedPassword)) {
                         return true;

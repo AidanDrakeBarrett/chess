@@ -1,8 +1,8 @@
 package service;
 
 import dataaccess.DataAccessException;
-import dataaccess.MemoryAuthDAO;
-import dataaccess.MemoryUserDAO;
+import dataaccess.SQLAuthDAO;
+import dataaccess.SQLUserDAO;
 import dataaccess.UserData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -12,8 +12,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class UserServiceTest {
     private final UserService service = new UserService();
-    private final MemoryUserDAO userDAO = new MemoryUserDAO();
-    private final MemoryAuthDAO authDAO = new MemoryAuthDAO();
+    private final SQLUserDAO userDAO = new SQLUserDAO();
+    private final SQLAuthDAO authDAO = new SQLAuthDAO();
     private final String username1 = "user1";
     private final String username2 = "user2";
     private final String password1 = "password1";

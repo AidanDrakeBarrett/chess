@@ -34,7 +34,7 @@ public class MemoryGameDAO implements GameDAO {
                     int ID = gameID;
                     String black = game.blackUsername();
                     String gName = game.gameName();
-                    GameData newGame = new GameData(ID, username, black, gName, game.chessGame(), game.spectators());
+                    GameData newGame = new GameData(ID, username, black, gName, game.chessGame());
                     gameDataArrayList.remove(game);
                     gameDataArrayList.add(newGame);
                     return;
@@ -46,7 +46,7 @@ public class MemoryGameDAO implements GameDAO {
                     int ID = gameID;
                     String white = game.whiteUsername();
                     String gName = game.gameName();
-                    GameData newGame = new GameData(ID, white, username, gName, game.chessGame(), game.spectators());
+                    GameData newGame = new GameData(ID, white, username, gName, game.chessGame());
                     gameDataArrayList.remove(game);
                     gameDataArrayList.add(newGame);
                     return;
@@ -60,7 +60,7 @@ public class MemoryGameDAO implements GameDAO {
     public int createGame(String gameName) {
         int gameID = gameDataArrayList.size() + 1;
         ChessGame newGame = new ChessGame();
-        GameData newGameData = new GameData(gameID, null, null, gameName, newGame, new HashSet<>());
+        GameData newGameData = new GameData(gameID, null, null, gameName, newGame);
         gameDataArrayList.add(newGameData);
         return gameID;
     }

@@ -6,9 +6,9 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 public class ClearAppServiceTest {
     private ClearAppService service = new ClearAppService();
-    private MemoryGameDAO gameDAO = new MemoryGameDAO();
-    private MemoryAuthDAO authDAO = new MemoryAuthDAO();
-    private MemoryUserDAO userDAO = new MemoryUserDAO();
+    private SQLGameDAO gameDAO = new SQLGameDAO();
+    private SQLAuthDAO authDAO = new SQLAuthDAO();
+    private SQLUserDAO userDAO = new SQLUserDAO();
 
     @Test
     void clearApplication() {

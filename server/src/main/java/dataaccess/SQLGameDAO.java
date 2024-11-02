@@ -48,9 +48,7 @@ public class SQLGameDAO implements GameDAO{
                         String gameName = rs.getString("gameName");
                         String gameJson = rs.getString("chessGame");
                         ChessGame chessGame = new Gson().fromJson(gameJson, ChessGame.class);
-                        String spectatorJson = rs.getString("spectators");
-                        HashSet<String> spectators = new Gson().fromJson(spectatorJson, HashSet.class);
-                        GameData returnGame = new GameData(id, whiteUsername, blackUsername, gameName, chessGame, spectators);
+                        GameData returnGame = new GameData(id, whiteUsername, blackUsername, gameName, chessGame);
                         return returnGame;
                     }
                 } catch(SQLException e) {}
@@ -113,7 +111,9 @@ public class SQLGameDAO implements GameDAO{
                     throw new DataAccessException("Error: already taken");
                 } catch(SQLException e) {}
             }
-            spectatorInserter(username, gameID, conn);
+            if(clientColor == null) {
+                throw new DataAccessException("Error: bad request");
+            }
         } catch(SQLException e) {}
     }
     private void playerInserter(String username, String colorColumn, int gameID, Connection conn) throws SQLException {
@@ -130,51 +130,20 @@ public class SQLGameDAO implements GameDAO{
             preparedStatement.executeUpdate();
         }
     }
-    private void spectatorInserter(String username, int gameID, Connection conn) throws SQLException {
-        var statement = """
-                SELECT spectators FROM GameData
-                WHERE id = ?;
-                """;
-        try(var preparedStatement = conn.prepareStatement(statement)) {
-            preparedStatement.setInt(1, gameID);
-            try(var rs = preparedStatement.executeQuery()) {
-                String spectatorJson = null;
-                while(rs.next()) {
-                    spectatorJson = rs.getString("spectators");
-                }
-                HashSet<String> spectators = new Gson().fromJson(spectatorJson, HashSet.class);
-                spectators.add(username);
-                var updatedSpectatorJson = new Gson().toJson(spectators);
-                var updateStatement = """
-                        UPDATE GameData
-                        SET spectators = ?
-                        WHERE id = ?;
-                        """;
-                try(var preparedUpdateStatement = conn.prepareStatement(updateStatement)) {
-                    preparedUpdateStatement.setString(1, updatedSpectatorJson);
-                    preparedUpdateStatement.setInt(2, gameID);
-                    preparedUpdateStatement.executeUpdate();
-                }
-            }
-        }
-    }
 
     @Override
     public int createGame(String gameName) {
         try(var conn = DatabaseManager.getConnection()) {
             ChessGame game = new ChessGame();
             var gameJson = new Gson().toJson(game);
-            HashSet<String> spectators = new HashSet<>();
-            var spectatorJson = new Gson().toJson(spectators);
             var statement = """
                     INSERT INTO GameData
-                    (gameName, chessGame, spectators)
-                    VALUES(?, ?, ?);
+                    (gameName, chessGame)
+                    VALUES (?, ?);
                     """;
             try(var preparedStatement = conn.prepareStatement(statement)) {
                 preparedStatement.setString(1, gameName);
                 preparedStatement.setString(2, gameJson);
-                preparedStatement.setString(3, spectatorJson);
                 preparedStatement.executeUpdate();
                 return newGameIDQuery(gameName, conn);
             } catch(SQLException e) {}
@@ -232,7 +201,6 @@ public class SQLGameDAO implements GameDAO{
                 blackUsername VARCHAR(255),
                 gameName VARCHAR(255) NOT NULL,
                 chessGame VARCHAR(2047) NOT NULL,
-                spectators VARCHAR(2047) NOT NULL,
                 PRIMARY KEY (id)
                 );
             """

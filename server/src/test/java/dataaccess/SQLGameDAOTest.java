@@ -17,7 +17,7 @@ public class SQLGameDAOTest {
     SQLGameDAO gameDAO = new SQLGameDAO();
     String gameName1 = "gameName1";
     ChessGame game1 = new ChessGame();
-    GameData gameData1 = new GameData(1, null, null, gameName1, game1, null);
+    GameData gameData1 = new GameData(1, null, null, gameName1, game1);
 
     @AfterEach
     void tearDown() {
@@ -75,27 +75,12 @@ public class SQLGameDAOTest {
         assertEquals(abbreviation, ((ArrayList<AbbreviatedGameData>) gameDAO.listGames()).getFirst());
     }
     @Test
-    void JoinGameSpectatorPositive() throws DataAccessException {
-        int gameID1 = gameDAO.createGame(gameName1);
-        String username = "username";
-        gameDAO.joinGame(username, null, gameID1);
-        HashSet<String> spectators = new HashSet<>();
-        spectators.add(username);
-        assertEquals(spectators, gameDAO.getGame(gameID1).spectators());
-    }
-    @Test
-    void JoinGameSpectatorNegative() {
-        int gameID1 = gameDAO.createGame(gameName1);
-        String username = "username";
-        assertThrows(DataAccessException.class, ()->gameDAO.joinGame(username, null, 2));
-    }
-    @Test
     void listGamesPositive() {
         int gameID1 = gameDAO.createGame(gameName1);
         String gameName2 = "gameName2";
         ChessGame game2 = new ChessGame();
         HashSet<String> spectators2 = new HashSet<>();
-        GameData gameData2 = new GameData(2, null, null, gameName2, game2, spectators2);
+        GameData gameData2 = new GameData(2, null, null, gameName2, game2);
         int gameID2 = gameDAO.createGame(gameName2);
         AbbreviatedGameData abbreviation1 = new AbbreviatedGameData(gameID1, null, null, gameName1);
         AbbreviatedGameData abbreviation2 = new AbbreviatedGameData(gameID2, null, null, gameName2);

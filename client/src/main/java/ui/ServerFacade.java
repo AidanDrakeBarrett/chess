@@ -1,9 +1,7 @@
 package ui;
 
 import chess.ChessGame;
-import chess.ChessPiece;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import dataaccess.AbbreviatedGameData;
 import dataaccess.AuthData;
 import dataaccess.UserData;
@@ -27,6 +25,42 @@ public class ServerFacade {
         var body = new Gson().toJson(newUser);
         String method = "POST";
         this.authToken = sendRequest(path, method, body, authToken, AuthData.class).authToken();
+    }
+    public void login(UserData newLogin) throws ResponseException {
+        var path = "/session";
+        var body = new Gson().toJson(newLogin);
+        String method = "POST";
+        this.authToken = sendRequest(path, method, body, authToken, AuthData.class).authToken();
+    }
+    public int create(String gameName) throws ResponseException {
+        String path = "/game";
+        var body = new Gson().toJson(Map.of("gameName", gameName));
+        String method = "POST";
+        var newGame = sendRequest(path, method, body, authToken, Map.class);
+        int gameID = (int) newGame.get("gameID");
+        return gameID;
+    }
+    public ArrayList list() throws ResponseException {
+        String path = "/game";
+        String body = null;
+        String method = "GET";
+        var listMap = sendRequest(path, method, body, authToken, Map.class);
+        @SuppressWarnings("unchecked")
+        ArrayList<AbbreviatedGameData> gameArray = (ArrayList<AbbreviatedGameData>) listMap.get("games");
+        return gameArray;
+    }
+    public void join(String gameID, ChessGame.TeamColor color) throws ResponseException {
+        String path = "/game";
+        var body = new Gson().toJson(new JoinRequests(color, Integer.parseInt(gameID)));
+        String method = "PUT";
+        sendRequest(path, method, body, authToken, null);
+    }
+    public void logout() throws ResponseException {
+        String path = "/session";
+        String body = null;
+        String method = "DELETE";
+        sendRequest(path, method, body, authToken, null);
+        authToken = null;
     }
     private <T> T sendRequest(String path, String method, String body, String authToken, Class<T> responseClass) throws
             ResponseException {

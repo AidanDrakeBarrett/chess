@@ -160,6 +160,7 @@ public class Client {
             board.resetBoard();
             return String.format("joined game as " + position + "\n" + drawBoard(board.getBoard()));
         }
+        throw new ResponseException(400, "Error: bad request");
     }
     public String logout() throws ResponseException {
         serverFacade.logout();

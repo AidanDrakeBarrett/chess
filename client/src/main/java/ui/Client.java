@@ -45,10 +45,73 @@ public class Client {
     private void printPrompt() {
         System.out.print("\n\u001b[15;40;0m>>>");
     }
-    public void notify(Notification notification) {}
-    public String help() {}
-    public String eval(String input) {}
-    public String register(String... params) throws ResponseException {}
+    public void notify(Notification notification) {
+        System.out.println(RED + notification.getMessage());
+        printPrompt();
+    }
+    public String help() {
+        StringBuilder helpCommands = new StringBuilder();
+        if(!loggedIn) {
+            helpCommands.append("register <USERNAME> <PASSWORD> <EMAIL>\n");
+            helpCommands.append("\tcreate an account\n");
+            helpCommands.append("login <USERNAME> <PASSWORD>\n");
+            helpCommands.append("\tlogin to a preexisting account\n");
+            helpCommands.append("quit\n");
+            helpCommands.append("\tleave the serverFacade\n");
+            helpCommands.append("help\n");
+            helpCommands.append("\tdisplay possible commands\n");
+        }
+        if(loggedIn) {
+            helpCommands.append("create <NAME>\n");
+            helpCommands.append("\tstart a new game\n");
+            helpCommands.append("list\n");
+            helpCommands.append("\tlist games that have already been created\n");
+            helpCommands.append("join <GAME ID> <WHITE|BLACK|EMPTY>\n");
+            helpCommands.append("\tjoin a game using its ID and which color you want to play" +
+                    ", or leave blank to spectate\n");
+            helpCommands.append("observe <GAME ID>\n");
+            helpCommands.append("\tanother way to spectate a game\n");
+            helpCommands.append("quit\n");
+            helpCommands.append("\tleave the current game\n");
+            helpCommands.append("logout\n");
+            helpCommands.append("\tlog out of your account\n");
+            helpCommands.append("help\n");
+            helpCommands.append("\tdisplay possible commands\n");
+        }
+        return helpCommands.toString();
+    }
+    public String eval(String input) {
+        try {
+            var tokens = input.toLowerCase().split(" ");
+            var cmd = (tokens.length > 0) ? tokens[0] : "help";
+            var params = Arrays.copyOfRange(tokens, 1, tokens.length);
+            return switch (cmd) {
+                case "register" -> register(params);
+                case "login" -> login(params);
+                case "create" -> create(params);
+                case "list" -> list();
+                case "join" -> join(params);
+                case "observe" -> join(params);
+                case "logout" -> logout();
+                case "quit" -> "quit";
+                default -> help();
+            };
+        } catch(ResponseException e) {
+            return e.getMessage();
+        }
+    }
+    public String register(String... params) throws ResponseException {
+        if(params.length >= 3) {
+            String username = params[0];
+            String password = params[1];
+            String email = params[2];
+            UserData newUser = new UserData(username, password, email);
+            serverFacade.register(newUser);
+            loggedIn = true;
+            return String.format("Registered and signed in as %s.", username);
+        }
+        throw new ResponseException(400, "Error: bad request");
+    }
     public String login(String... params) throws ResponseException {}
     public String create(String... params) throws ResponseException {}
     public String list() throws ResponseException {}

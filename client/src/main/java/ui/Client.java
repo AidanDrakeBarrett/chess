@@ -112,10 +112,35 @@ public class Client {
         }
         throw new ResponseException(400, "Error: bad request");
     }
-    public String login(String... params) throws ResponseException {}
-    public String create(String... params) throws ResponseException {}
-    public String list() throws ResponseException {}
-    public String join() throws ResponseException {}
+    public String login(String... params) throws ResponseException {
+        if(params.length >= 2) {
+            String username = params[0];
+            String password = params[1];
+            UserData newLogin = new UserData(username, password, null);
+            serverFacade.login(newLogin);
+            loggedIn = true;
+            return String.format("Logged in as %s", username);
+        }
+        throw new ResponseException(400, "Error: bad request");
+    }
+    public String create(String... params) throws ResponseException {
+        if(params.length >= 1) {
+            String gameName = params[0];
+            int gameID = serverFacade.create(gameName);
+            return String.format("Created game %s with ID %d.", gameName, gameID);
+        }
+        throw new ResponseException(400, "Error: bad request");
+    }
+    public String list() throws ResponseException {
+        ArrayList<AbbreviatedGameData> gameList = serverFacade.list();
+        StringBuilder returnList = new StringBuilder("Current chess games:\n");
+        for(AbbreviatedGameData game:gameList) {
+            returnList.append(String.format("gameID: %d, whiteUsername: %s, blackUsername: %s, gameName: %s"
+                    , game.gameID(), game.whiteUsername(), game.blackUsername(), game.gameName()));
+        }
+        return returnList.toString();
+    }
+    public String join(String... params) throws ResponseException {}
     public String logout() throws ResponseException {}
     public String drawBoard(ChessPiece[][] board) {}
 

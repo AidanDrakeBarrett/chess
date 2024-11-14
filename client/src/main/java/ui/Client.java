@@ -140,7 +140,24 @@ public class Client {
         }
         return returnList.toString();
     }
-    public String join(String... params) throws ResponseException {}
+    public String join(String... params) throws ResponseException {
+        if(params.length >= 1) {
+            String gameID = params[0];
+            ChessGame.TeamColor color = null;
+            String position = "spectator";
+            if(params.length >= 2) {
+                if(Objects.equals(params[1], "white")) {
+                    color = ChessGame.TeamColor.WHITE;
+                    position = "white";
+                }
+                if(Objects.equals(params[1], "black")) {
+                    color = ChessGame.TeamColor.BLACK;
+                    position = "black";
+                }
+            }
+            ChessPiece[][] board = serverFacade.join(gameID, color);
+        }
+    }
     public String logout() throws ResponseException {}
     public String drawBoard(ChessPiece[][] board) {}
 

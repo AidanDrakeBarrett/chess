@@ -24,5 +24,12 @@ public class Client {
     public void notify(Notification notification) {}
     public String help() {}
     public String eval(String input) {}
-    //And now for exposing endpoints, but I'm frankly tired, and ready for bed, so Imma just write a commit
+    public String register(String... params) throws ResponseException {}
+    public login(String... params) throws ResponseException {}
+    public String create(String... params) throws ResponseException {}
+    public String list() throws ResponseException {}
+    public String join() throws ResponseException {}
+    public String logout() throws ResponseException {}
+    public String drawBoard(ChessPiece[][] board) {}
+
 }

@@ -88,6 +88,9 @@ public class ChessBoard {
         board[7][4] = blackKing;
         board[0][4] = whiteKing;
     }
+    public ChessPiece[][] getBoard() {
+        return board;
+    }
 
     @Override
     public boolean equals(Object o) {

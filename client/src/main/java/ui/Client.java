@@ -155,7 +155,10 @@ public class Client {
                     position = "black";
                 }
             }
-            ChessPiece[][] board = serverFacade.join(gameID, color);
+            serverFacade.join(gameID, color);
+            ChessBoard board = new ChessBoard();
+            board.resetBoard();
+            return String.format("joined game as " + position + "\n" + drawBoard(board.getBoard()));
         }
     }
     public String logout() throws ResponseException {}

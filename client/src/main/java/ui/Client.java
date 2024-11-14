@@ -161,7 +161,11 @@ public class Client {
             return String.format("joined game as " + position + "\n" + drawBoard(board.getBoard()));
         }
     }
-    public String logout() throws ResponseException {}
+    public String logout() throws ResponseException {
+        serverFacade.logout();
+        loggedIn = false;
+        return String.format("logged out");
+    }
     public String drawBoard(ChessPiece[][] board) {}
 
 }

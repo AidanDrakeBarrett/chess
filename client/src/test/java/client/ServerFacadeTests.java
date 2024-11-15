@@ -1,10 +1,12 @@
 package client;
 
 import chess.ChessGame;
-import dataaccess.*;
+import records.*;
+import dataaccess.SQLUserDAO;
+import dataaccess.SQLAuthDAO;
+import dataaccess.SQLGameDAO;
 import org.junit.jupiter.api.*;
 import server.Server;
-import server.ResponseException;
 import ui.ServerFacade;
 
 import java.util.ArrayList;
@@ -97,7 +99,7 @@ public class ServerFacadeTests {
     }
     @Test
     @Order(11)
-    void joinNegative() throws ResponseException {
+    void joinNegative() throws records.ResponseException {
         assertThrows(ResponseException.class, ()->facade.join("2", ChessGame.TeamColor.WHITE));
         facade.logout();;
     }

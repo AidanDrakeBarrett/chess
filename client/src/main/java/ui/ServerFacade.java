@@ -1,13 +1,9 @@
 package ui;
 
 import chess.ChessGame;
+import records.*;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import dataaccess.AbbreviatedGameData;
-import dataaccess.AuthData;
-import dataaccess.UserData;
-import server.JoinRequests;
-import server.ResponseException;
 
 import java.io.*;
 import java.net.*;

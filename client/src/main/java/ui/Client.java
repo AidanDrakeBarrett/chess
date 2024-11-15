@@ -3,9 +3,7 @@ package ui;
 import chess.ChessBoard;
 import chess.ChessGame;
 import chess.ChessPiece;
-import dataaccess.AbbreviatedGameData;
-import dataaccess.UserData;
-import server.ResponseException;
+import records.*;
 
 import javax.management.Notification;
 import java.util.ArrayList;

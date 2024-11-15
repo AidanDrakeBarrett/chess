@@ -43,10 +43,6 @@ public class Client {
     private void printPrompt() {
         System.out.print("\n\u001b[15;40;0m>>>");
     }
-    public void notify(Notification notification) {
-        System.out.println(RED + notification.getMessage());
-        printPrompt();
-    }
     public String help() {
         StringBuilder helpCommands = new StringBuilder();
         if(!loggedIn) {

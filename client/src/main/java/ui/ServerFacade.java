@@ -2,6 +2,7 @@ package ui;
 
 import chess.ChessGame;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import dataaccess.AbbreviatedGameData;
 import dataaccess.AuthData;
 import dataaccess.UserData;
@@ -37,16 +38,17 @@ public class ServerFacade {
         var body = new Gson().toJson(Map.of("gameName", gameName));
         String method = "POST";
         var newGame = sendRequest(path, method, body, authToken, Map.class);
-        int gameID = (int) newGame.get("gameID");
-        return gameID;
+        Double gameID = (Double) newGame.get("gameID");
+        return gameID.intValue();
     }
     public ArrayList list() throws ResponseException {
         String path = "/game";
         String body = null;
         String method = "GET";
         var listMap = sendRequest(path, method, body, authToken, Map.class);
-        @SuppressWarnings("unchecked")
-        ArrayList<AbbreviatedGameData> gameArray = (ArrayList<AbbreviatedGameData>) listMap.get("games");
+        var arrayJson = new Gson().toJson(listMap.get("games"));
+        ArrayList<AbbreviatedGameData> gameArray = new Gson().fromJson(arrayJson,
+                new TypeToken<ArrayList<AbbreviatedGameData>>(){}.getType());
         return gameArray;
     }
     public void join(String gameID, ChessGame.TeamColor color) throws ResponseException {

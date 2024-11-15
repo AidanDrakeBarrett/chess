@@ -1,5 +1,7 @@
 package dataaccess;
 
+import server.ResponseException;
+
 import java.sql.*;
 import java.util.Properties;
 
@@ -67,6 +69,18 @@ public class DatabaseManager {
             return conn;
         } catch (SQLException e) {
             throw new DataAccessException(e.getMessage());
+        }
+    }
+    public static void configureDatabase(String[] createStatements) throws ResponseException, DataAccessException {
+        createDatabase();
+        try(var conn = getConnection()) {
+            for(var statement:createStatements) {
+                try(var preparedStatement = conn.prepareStatement(statement)) {
+                    preparedStatement.executeUpdate();
+                }
+            }
+        } catch(SQLException e) {
+            throw new ResponseException(500, String.format("Unable to configure database: %s", e.getMessage()));
         }
     }
 }

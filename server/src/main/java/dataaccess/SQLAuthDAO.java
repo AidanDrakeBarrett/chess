@@ -19,7 +19,7 @@ public class SQLAuthDAO implements AuthDAO {
     };
     public SQLAuthDAO() {
         try {
-            DatabaseConfigurer.configureDatabase(createStatements);
+            DatabaseManager.configureDatabase(createStatements);
         } catch(ResponseException resEx) {}
         catch(DataAccessException e) {}
     }

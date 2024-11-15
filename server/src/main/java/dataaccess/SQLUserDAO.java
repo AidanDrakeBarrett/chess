@@ -19,7 +19,7 @@ public class SQLUserDAO implements UserDAO {
     };
     public SQLUserDAO() {
         try {
-            DatabaseConfigurer.configureDatabase(createStatements);
+            DatabaseManager.configureDatabase(createStatements);
         } catch(ResponseException e) {}
         catch(DataAccessException e) {}
     }

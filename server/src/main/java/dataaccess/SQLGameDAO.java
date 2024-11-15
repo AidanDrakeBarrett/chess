@@ -11,7 +11,7 @@ import java.sql.*;
 import java.util.HashSet;
 import java.util.Objects;
 
-import static dataaccess.DatabaseConfigurer.configureDatabase;
+//import static dataaccess.DatabaseConfigurer.configureDatabase;
 
 public class SQLGameDAO implements GameDAO{
     private final String[] createStatements = {
@@ -28,7 +28,7 @@ public class SQLGameDAO implements GameDAO{
     };
     public SQLGameDAO() {
         try {
-            DatabaseConfigurer.configureDatabase(createStatements);
+            DatabaseManager.configureDatabase(createStatements);
         } catch(ResponseException e) {}
         catch(DataAccessException e) {}
     }

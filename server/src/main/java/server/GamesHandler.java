@@ -1,10 +1,12 @@
 package server;
 
 import com.google.gson.Gson;
-import dataaccess.AbbreviatedGameData;
+import records.AbbreviatedGameData;
 import service.GamesService;
 import spark.Request;
 import spark.Response;
+import records.ResponseException;
+import records.JoinRequests;
 
 import java.util.ArrayList;
 import java.util.Map;

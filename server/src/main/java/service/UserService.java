@@ -1,7 +1,9 @@
 package service;
 
 import dataaccess.*;
-import server.ResponseException;
+import records.ResponseException;
+import records.AuthData;
+import records.UserData;
 
 public class UserService {
     private static SQLUserDAO userDAO = new SQLUserDAO();

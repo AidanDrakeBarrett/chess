@@ -1,3 +1,7 @@
+/*no http status codes in error msgs to user
+* no game ids shown to user, but number the list, hide the ids away, cause you still need them
+* reject join requests with weird colors/numbers/etc
+* give a direct error message in the case of using letters to refer to games in join/observe requests, basically validate game identifiers*/
 package ui;
 
 import chess.ChessBoard;
@@ -5,13 +9,10 @@ import chess.ChessGame;
 import chess.ChessPiece;
 import records.*;
 
-import javax.management.Notification;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Scanner;
-
-import static java.awt.Color.RED;
 
 
 public class Client {
@@ -178,7 +179,7 @@ public class Client {
     }
     private void drawWhiteView(int row, int col, StringBuilder whiteView, ChessPiece[][] board) {
         if(row == 0 && col == 0) {
-            whiteView.append("\u001b[30;107;1m    a  b  c  d  e  f  g  h \u001b[39;49;0m\n");
+            whiteView.append("\u001b[30;107;1m   a  b  c  d  e  f  g  h \u001b[39;49;0m\n");
         }
         if(row > 0) {
             if (col == 0) {

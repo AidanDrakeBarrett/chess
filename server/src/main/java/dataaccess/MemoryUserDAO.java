@@ -1,5 +1,7 @@
 package dataaccess;
 
+import records.UserData;
+
 import java.util.HashSet;
 import java.util.Objects;
 

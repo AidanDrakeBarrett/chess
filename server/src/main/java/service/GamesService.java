@@ -1,11 +1,11 @@
 package service;
 
 import chess.ChessGame;
-import dataaccess.AbbreviatedGameData;
+import records.AbbreviatedGameData;
 import dataaccess.DataAccessException;
 import dataaccess.SQLAuthDAO;
 import dataaccess.SQLGameDAO;
-import server.ResponseException;
+import records.ResponseException;
 
 import java.util.Collection;
 import java.util.Objects;

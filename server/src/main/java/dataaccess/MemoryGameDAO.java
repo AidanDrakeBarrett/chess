@@ -1,10 +1,11 @@
 package dataaccess;
 
 import chess.ChessGame;
+import records.GameData;
+import records.AbbreviatedGameData;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 
 public class MemoryGameDAO implements GameDAO {
     private static ArrayList<GameData> gameDataArrayList = new ArrayList<>();

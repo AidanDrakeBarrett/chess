@@ -1,5 +1,7 @@
 package dataaccess;
 
+import records.UserData;
+
 public interface UserDAO {
     void clearData();
     boolean containsUsername(String username) throws DataAccessException;

@@ -3,12 +3,13 @@ package dataaccess;
 import chess.ChessGame;
 
 import com.google.gson.Gson;
-import server.ResponseException;
+import records.GameData;
+import records.ResponseException;
+import records.AbbreviatedGameData;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.sql.*;
-import java.util.HashSet;
 import java.util.Objects;
 
 //import static dataaccess.DatabaseConfigurer.configureDatabase;

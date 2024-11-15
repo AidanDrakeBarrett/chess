@@ -1,4 +1,5 @@
 package dataaccess;
+import records.AuthData;
 
 public interface AuthDAO {
     void clearData();

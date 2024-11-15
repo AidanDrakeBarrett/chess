@@ -1,6 +1,8 @@
 package dataaccess;
 
 import chess.ChessGame;
+import records.GameData;
+import records.AbbreviatedGameData;
 
 import java.util.Collection;
 

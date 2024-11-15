@@ -3,10 +3,10 @@ package service;
 import dataaccess.DataAccessException;
 import dataaccess.SQLAuthDAO;
 import dataaccess.SQLUserDAO;
-import dataaccess.UserData;
+import records.UserData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import server.ResponseException;
+import records.ResponseException;
 
 import static org.junit.jupiter.api.Assertions.*;
 

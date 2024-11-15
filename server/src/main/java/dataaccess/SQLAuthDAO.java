@@ -1,6 +1,7 @@
 package dataaccess;
 
-import server.ResponseException;
+import records.ResponseException;
+import records.AuthData;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -20,7 +21,7 @@ public class SQLAuthDAO implements AuthDAO {
     public SQLAuthDAO() {
         try {
             DatabaseManager.configureDatabase(createStatements);
-        } catch(ResponseException resEx) {}
+        } catch(ResponseException e) {}
         catch(DataAccessException e) {}
     }
     @Override

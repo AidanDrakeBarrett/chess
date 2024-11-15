@@ -1,11 +1,12 @@
 package server;
 
 import com.google.gson.Gson;
-import dataaccess.AuthData;
-import dataaccess.UserData;
+import records.AuthData;
+import records.UserData;
 import service.UserService;
 import spark.Request;
 import spark.Response;
+import records.ResponseException;
 
 import java.util.Map;
 

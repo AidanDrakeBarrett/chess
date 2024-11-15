@@ -1,7 +1,8 @@
 package dataaccess;
 
 import org.mindrot.jbcrypt.BCrypt;
-import server.ResponseException;
+import records.ResponseException;
+import records.UserData;
 
 import java.sql.*;
 import java.util.Objects;

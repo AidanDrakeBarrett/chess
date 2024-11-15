@@ -1,10 +1,8 @@
 package dataaccess;
 
 import chess.ChessGame;
-import dataaccess.AbbreviatedGameData;
-import dataaccess.DataAccessException;
-import dataaccess.GameData;
-import dataaccess.SQLGameDAO;
+import records.GameData;
+import records.AbbreviatedGameData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 

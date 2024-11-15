@@ -1,7 +1,3 @@
-/*no http status codes in error msgs to user
-* no game ids shown to user, but number the list, hide the ids away, cause you still need them
-* reject join requests with weird colors/numbers/etc
-* give a direct error message in the case of using letters to refer to games in join/observe requests, basically validate game identifiers*/
 package ui;
 
 import chess.ChessBoard;

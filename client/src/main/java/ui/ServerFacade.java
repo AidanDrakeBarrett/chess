@@ -19,59 +19,92 @@ public class ServerFacade {
     public ServerFacade(String url) {
         serverURL = url;
     }
-    public void register(UserData newUser) throws ResponseException {
-        var path = "/user";
-        var body = new Gson().toJson(newUser);
-        String method = "POST";
-        this.authToken = sendRequest(path, method, body, authToken, AuthData.class).authToken();
-    }
-    public void login(UserData newLogin) throws ResponseException {
-        var path = "/session";
-        var body = new Gson().toJson(newLogin);
-        String method = "POST";
-        this.authToken = sendRequest(path, method, body, authToken, AuthData.class).authToken();
-    }
-    public void create(String gameName) throws ResponseException {
-        String path = "/game";
-        var body = new Gson().toJson(Map.of("gameName", gameName));
-        String method = "POST";
-        sendRequest(path, method, body, authToken, Map.class);
-    }
-    public ArrayList list() throws ResponseException {
-        String path = "/game";
-        String body = null;
-        String method = "GET";
-        var listMap = sendRequest(path, method, body, authToken, Map.class);
-        var arrayJson = new Gson().toJson(listMap.get("games"));
-        ArrayList<AbbreviatedGameData> rawGameArray = new Gson().fromJson(arrayJson,
-                new TypeToken<ArrayList<AbbreviatedGameData>>(){}.getType());
-        safeGameIndex.clear();
-        ArrayList<AbbreviatedGameData> safeGameArray= new ArrayList<>();
-        for(int i = 0; i < rawGameArray.size(); ++i) {
-            String white = rawGameArray.get(i).whiteUsername();
-            String black = rawGameArray.get(i).blackUsername();
-            String name = rawGameArray.get(i).gameName();
-            AbbreviatedGameData safeGame = new AbbreviatedGameData((i + 1), white, black, name);
-            safeGameArray.add(safeGame);
-            safeGameIndex.put((i + 1), rawGameArray.get(i));
+    public void register(UserData newUser) throws RuntimeException {
+        try {
+            var path = "/user";
+            var body = new Gson().toJson(newUser);
+            String method = "POST";
+            this.authToken = sendRequest(path, method, body, authToken, AuthData.class).authToken();
+        } catch(ResponseException e) {
+            throw new RuntimeException("Error: username already taken");
         }
-        return safeGameArray;
     }
-    public void join(int safeGameNumber, ChessGame.TeamColor color) throws ResponseException {
-        if(color != null) {
+    public void login(UserData newLogin) throws RuntimeException {
+        try {
+            var path = "/session";
+            var body = new Gson().toJson(newLogin);
+            String method = "POST";
+            this.authToken = sendRequest(path, method, body, authToken, AuthData.class).authToken();
+        } catch(ResponseException e) {
+            throw new RuntimeException("Error: username or password is incorrect.");
+        }
+    }
+    public void create(String gameName) throws RuntimeException {
+        try {
             String path = "/game";
-            int gameID = safeGameIndex.get(safeGameNumber).gameID();
-            var body = new Gson().toJson(new JoinRequests(color, gameID));
-            String method = "PUT";
-            sendRequest(path, method, body, authToken, null);
+            var body = new Gson().toJson(Map.of("gameName", gameName));
+            String method = "POST";
+            sendRequest(path, method, body, authToken, Map.class);
+        } catch(ResponseException e) {
+            throw new RuntimeException("Error: Please log in to create a game.");
         }
     }
-    public void logout() throws ResponseException {
-        String path = "/session";
-        String body = null;
-        String method = "DELETE";
-        sendRequest(path, method, body, authToken, null);
-        authToken = null;
+    public ArrayList list() throws RuntimeException {
+        try {
+            String path = "/game";
+            String body = null;
+            String method = "GET";
+            var listMap = sendRequest(path, method, body, authToken, Map.class);
+            var arrayJson = new Gson().toJson(listMap.get("games"));
+            ArrayList<AbbreviatedGameData> rawGameArray = new Gson().fromJson(arrayJson,
+                    new TypeToken<ArrayList<AbbreviatedGameData>>() {
+                    }.getType());
+            safeGameIndex.clear();
+            ArrayList<AbbreviatedGameData> safeGameArray = new ArrayList<>();
+            for (int i = 0; i < rawGameArray.size(); ++i) {
+                String white = rawGameArray.get(i).whiteUsername();
+                String black = rawGameArray.get(i).blackUsername();
+                String name = rawGameArray.get(i).gameName();
+                AbbreviatedGameData safeGame = new AbbreviatedGameData((i + 1), white, black, name);
+                safeGameArray.add(safeGame);
+                safeGameIndex.put((i + 1), rawGameArray.get(i));
+            }
+            return safeGameArray;
+        } catch(ResponseException e) {
+            throw new RuntimeException("Error: please login to see a list of games.");
+        }
+    }
+    public void join(int safeGameNumber, ChessGame.TeamColor color) throws RuntimeException {
+        try {
+            if (color != null) {
+                String path = "/game";
+                int gameID = safeGameIndex.get(safeGameNumber).gameID();
+                var body = new Gson().toJson(new JoinRequests(color, gameID));
+                String method = "PUT";
+                sendRequest(path, method, body, authToken, null);
+            }
+        } catch(ResponseException e) {
+            if(e.getStatusCode() == 400) {
+                throw new RuntimeException("Error: game does not exist.");
+            }
+            if(e.getStatusCode() == 401) {
+                throw new RuntimeException("Error: please log in to join or watch a game.");
+            }
+            if(e.getStatusCode() == 403) {
+                throw new RuntimeException("Error: position already taken.");
+            }
+        }
+    }
+    public void logout() throws RuntimeException {
+        try {
+            String path = "/session";
+            String body = null;
+            String method = "DELETE";
+            sendRequest(path, method, body, authToken, null);
+            authToken = null;
+        } catch(ResponseException e) {
+            throw new RuntimeException("Error: you already were not logged in.");
+        }
     }
     private <T> T sendRequest(String path, String method, String body, String authToken, Class<T> responseClass) throws
             ResponseException {

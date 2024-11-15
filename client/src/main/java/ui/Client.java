@@ -94,11 +94,11 @@ public class Client {
                 case "quit" -> "quit";
                 default -> help();
             };
-        } catch(ResponseException e) {
+        } catch(RuntimeException e) {
             return e.getMessage();
         }
     }
-    public String register(String... params) throws ResponseException {
+    public String register(String... params) throws RuntimeException {
         if(params.length >= 3) {
             String username = params[0];
             String password = params[1];
@@ -108,9 +108,10 @@ public class Client {
             loggedIn = true;
             return String.format("Registered and signed in as %s.", username);
         }
-        throw new ResponseException(400, "Error: bad request");
+        throw new RuntimeException("Error: make sure username, password, and email " +
+                "are filled out with a space between each field");
     }
-    public String login(String... params) throws ResponseException {
+    public String login(String... params) throws RuntimeException {
         if(params.length >= 2) {
             String username = params[0];
             String password = params[1];
@@ -119,17 +120,17 @@ public class Client {
             loggedIn = true;
             return String.format("Logged in as %s", username);
         }
-        throw new ResponseException(400, "Error: bad request");
+        throw new RuntimeException("Error: make sure both username and password are written with a space between them");
     }
-    public String create(String... params) throws ResponseException {
+    public String create(String... params) throws RuntimeException {
         if(params.length >= 1) {
             String gameName = params[0];
             serverFacade.create(gameName);
             return String.format("Created game %s.", gameName);
         }
-        throw new ResponseException(400, "Error: bad request");
+        throw new RuntimeException("Error: please provide a name for your new game.");
     }
-    public String list() throws ResponseException {
+    public String list() throws RuntimeException {
         ArrayList<AbbreviatedGameData> gameList = serverFacade.list();
         StringBuilder returnListBuilder = new StringBuilder("Current chess games:\n");
         for(AbbreviatedGameData game:gameList) {
@@ -139,7 +140,7 @@ public class Client {
         gameListSize = gameList.size();
         return returnListBuilder.toString();
     }
-    public String join(String... params) throws ResponseException, RuntimeException {
+    public String join(String... params) throws RuntimeException {
         if(params.length >= 1) {
             int gameNumber;
             try {
@@ -173,7 +174,7 @@ public class Client {
         throw new RuntimeException("Error: please provide a game number. " +
                 "If you are joining a game to play, provide a valid color too.");
     }
-    public String logout() throws ResponseException {
+    public String logout() throws RuntimeException {
         serverFacade.logout();
         loggedIn = false;
         return String.format("logged out");

@@ -1,7 +1,6 @@
 package client;
 
 import chess.ChessGame;
-import dataaccess.GameDAO;
 import records.*;
 import dataaccess.SQLUserDAO;
 import dataaccess.SQLAuthDAO;
@@ -41,14 +40,14 @@ public class ServerFacadeTests {
 
     @Test
     @Order(1)
-    void registerPositive() throws ResponseException {
+    void registerPositive() {
         UserData newUser = new UserData("user", "pass", "email");
         facade.register(newUser);
         assertTrue(!facade.getAuth().isEmpty());
     }
     @Test
     @Order(2)
-    void createPositive() throws ResponseException {
+    void createPositive() {
         String gameName = "new_game";
         facade.create(gameName);
         GameData expectedGame = new GameData(1, null, null, "new_game", new ChessGame());
@@ -56,7 +55,7 @@ public class ServerFacadeTests {
     }
     @Test
     @Order(3)
-    void listPositive() throws ResponseException {
+    void listPositive() {
         AbbreviatedGameData gameData = new AbbreviatedGameData(1, null, null, "new_game");
         ArrayList<AbbreviatedGameData> expectedList = new ArrayList<>();
         expectedList.add(gameData);
@@ -64,51 +63,51 @@ public class ServerFacadeTests {
     }
     @Test
     @Order(4)
-    void joinPositive() throws ResponseException {
+    void joinPositive() {
         assertDoesNotThrow(()->facade.join(1, ChessGame.TeamColor.WHITE));
     }
     @Test
     @Order(5)
-    void logoutPositive() throws ResponseException {
+    void logoutPositive() {
         assertDoesNotThrow(()->facade.logout());
     }
     @Test
     @Order(6)
-    void logoutNegative() throws ResponseException {
-        assertThrows(ResponseException.class, ()->facade.logout());
+    void logoutNegative() {
+        assertThrows(RuntimeException.class, ()->facade.logout());
     }
     @Test
     @Order(7)
-    void loginNegative() throws ResponseException {
+    void loginNegative() {
         UserData badUser = new UserData("wrong", "wrong", null);
-        assertThrows(ResponseException.class, ()->facade.login(badUser));
+        assertThrows(RuntimeException.class, ()->facade.login(badUser));
     }
     @Test
     @Order(8)
-    void registerNegative() throws ResponseException {
+    void registerNegative() {
         UserData takenName = new UserData("user", "aPassword", "anEmail");
-        assertThrows(ResponseException.class, ()->facade.register(takenName));
+        assertThrows(RuntimeException.class, ()->facade.register(takenName));
     }
     @Test
     @Order(9)
-    void listNegative() throws ResponseException {
-        assertThrows(ResponseException.class, ()->facade.list());
+    void listNegative() {
+        assertThrows(RuntimeException.class, ()->facade.list());
     }
     @Test
     @Order(10)
-    void loginPositive() throws ResponseException {
+    void loginPositive() {
         UserData goodLogin = new UserData("user", "pass", null);
         assertDoesNotThrow(()->facade.login(goodLogin));
     }
     @Test
     @Order(11)
-    void joinNegative() throws records.ResponseException {
+    void joinNegative() {
         assertThrows(RuntimeException.class, ()->facade.join(2, ChessGame.TeamColor.WHITE));
         facade.logout();
     }
     @Test
     @Order(12)
-    void createNegative() throws ResponseException {
-        assertThrows(ResponseException.class, ()->facade.create("game2"));
+    void createNegative() {
+        assertThrows(RuntimeException.class, ()->facade.create("game2"));
     }
 }

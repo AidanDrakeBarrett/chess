@@ -8,10 +8,12 @@ import com.google.gson.reflect.TypeToken;
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 public class ServerFacade {
     private String authToken = null;
+    private HashMap<Integer, AbbreviatedGameData> safeGameIndex = new HashMap<>();
     private final String serverURL;
 
     public ServerFacade(String url) {
@@ -29,13 +31,11 @@ public class ServerFacade {
         String method = "POST";
         this.authToken = sendRequest(path, method, body, authToken, AuthData.class).authToken();
     }
-    public int create(String gameName) throws ResponseException {
+    public void create(String gameName) throws ResponseException {
         String path = "/game";
         var body = new Gson().toJson(Map.of("gameName", gameName));
         String method = "POST";
-        var newGame = sendRequest(path, method, body, authToken, Map.class);
-        Double gameID = (Double) newGame.get("gameID");
-        return gameID.intValue();
+        sendRequest(path, method, body, authToken, Map.class);
     }
     public ArrayList list() throws ResponseException {
         String path = "/game";
@@ -43,14 +43,25 @@ public class ServerFacade {
         String method = "GET";
         var listMap = sendRequest(path, method, body, authToken, Map.class);
         var arrayJson = new Gson().toJson(listMap.get("games"));
-        ArrayList<AbbreviatedGameData> gameArray = new Gson().fromJson(arrayJson,
+        ArrayList<AbbreviatedGameData> rawGameArray = new Gson().fromJson(arrayJson,
                 new TypeToken<ArrayList<AbbreviatedGameData>>(){}.getType());
-        return gameArray;
+        safeGameIndex.clear();
+        ArrayList<AbbreviatedGameData> safeGameArray= new ArrayList<>();
+        for(int i = 0; i < rawGameArray.size(); ++i) {
+            String white = rawGameArray.get(i).whiteUsername();
+            String black = rawGameArray.get(i).blackUsername();
+            String name = rawGameArray.get(i).gameName();
+            AbbreviatedGameData safeGame = new AbbreviatedGameData((i + 1), white, black, name);
+            safeGameArray.add(safeGame);
+            safeGameIndex.put((i + 1), rawGameArray.get(i));
+        }
+        return safeGameArray;
     }
-    public void join(String gameID, ChessGame.TeamColor color) throws ResponseException {
+    public void join(int safeGameNumber, ChessGame.TeamColor color) throws ResponseException {
         if(color != null) {
             String path = "/game";
-            var body = new Gson().toJson(new JoinRequests(color, Integer.parseInt(gameID)));
+            int gameID = safeGameIndex.get(safeGameNumber).gameID();
+            var body = new Gson().toJson(new JoinRequests(color, gameID));
             String method = "PUT";
             sendRequest(path, method, body, authToken, null);
         }

@@ -1,6 +1,7 @@
 package client;
 
 import chess.ChessGame;
+import dataaccess.GameDAO;
 import records.*;
 import dataaccess.SQLUserDAO;
 import dataaccess.SQLAuthDAO;
@@ -49,7 +50,9 @@ public class ServerFacadeTests {
     @Order(2)
     void createPositive() throws ResponseException {
         String gameName = "new_game";
-        assertEquals(1, facade.create(gameName));
+        facade.create(gameName);
+        GameData expectedGame = new GameData(1, null, null, "new_game", new ChessGame());
+        assertFalse(()->gameDAO.listGames().isEmpty());
     }
     @Test
     @Order(3)
@@ -62,7 +65,7 @@ public class ServerFacadeTests {
     @Test
     @Order(4)
     void joinPositive() throws ResponseException {
-        assertDoesNotThrow(()->facade.join("1", ChessGame.TeamColor.WHITE));
+        assertDoesNotThrow(()->facade.join(1, ChessGame.TeamColor.WHITE));
     }
     @Test
     @Order(5)
@@ -100,8 +103,8 @@ public class ServerFacadeTests {
     @Test
     @Order(11)
     void joinNegative() throws records.ResponseException {
-        assertThrows(ResponseException.class, ()->facade.join("2", ChessGame.TeamColor.WHITE));
-        facade.logout();;
+        assertThrows(RuntimeException.class, ()->facade.join(2, ChessGame.TeamColor.WHITE));
+        facade.logout();
     }
     @Test
     @Order(12)

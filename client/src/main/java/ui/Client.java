@@ -14,10 +14,13 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.Scanner;
 
+import static java.lang.Integer.parseInt;
+
 
 public class Client {
     private final ServerFacade serverFacade;
     private boolean loggedIn = false;
+    private int gameListSize = 0;
     public Client(String url) {
         serverFacade = new ServerFacade(url);
     }
@@ -67,7 +70,7 @@ public class Client {
             helpCommands.append("observe <GAME ID>\n");
             helpCommands.append("\tanother way to spectate a game\n");
             helpCommands.append("quit\n");
-            helpCommands.append("\tleave the current game\n");
+            helpCommands.append("\tleave the server\n");
             helpCommands.append("logout\n");
             helpCommands.append("\tlog out of your account\n");
             helpCommands.append("help\n");
@@ -121,26 +124,38 @@ public class Client {
     public String create(String... params) throws ResponseException {
         if(params.length >= 1) {
             String gameName = params[0];
-            int gameID = serverFacade.create(gameName);
-            return String.format("Created game %s with ID %d.", gameName, gameID);
+            serverFacade.create(gameName);
+            return String.format("Created game %s.", gameName);
         }
         throw new ResponseException(400, "Error: bad request");
     }
     public String list() throws ResponseException {
         ArrayList<AbbreviatedGameData> gameList = serverFacade.list();
-        StringBuilder returnList = new StringBuilder("Current chess games:\n");
+        StringBuilder returnListBuilder = new StringBuilder("Current chess games:\n");
         for(AbbreviatedGameData game:gameList) {
-            returnList.append(String.format("gameID: %d, whiteUsername: %s, blackUsername: %s, gameName: %s\n"
+            returnListBuilder.append(String.format("game#: %d, whiteUsername: %s, blackUsername: %s, gameName: %s\n"
                     , game.gameID(), game.whiteUsername(), game.blackUsername(), game.gameName()));
         }
-        return returnList.toString();
+        gameListSize = gameList.size();
+        return returnListBuilder.toString();
     }
-    public String join(String... params) throws ResponseException {
+    public String join(String... params) throws ResponseException, RuntimeException {
         if(params.length >= 1) {
-            String gameID = params[0];
+            int gameNumber;
+            try {
+                gameNumber = parseInt(params[0]);
+            } catch(NumberFormatException e) {
+                throw new RuntimeException(String.format("Error: %s is not a valid game number.", params[0]));
+            }
+            if(gameNumber < 0 || gameNumber > gameListSize) {
+                throw new RuntimeException(String.format("Error: %s is not a valid game number.", params[0]));
+            }
             ChessGame.TeamColor color = null;
             String position = "spectator";
             if(params.length >= 2) {
+                if(!Objects.equals(params[1], "white") && !Objects.equals(params[1], "black")) {
+                    throw new RuntimeException("Error: player color must be 'white', 'black', or left empty to watch.");
+                }
                 if(Objects.equals(params[1], "white")) {
                     color = ChessGame.TeamColor.WHITE;
                     position = "white";
@@ -150,12 +165,13 @@ public class Client {
                     position = "black";
                 }
             }
-            serverFacade.join(gameID, color);
+            serverFacade.join(gameNumber, color);
             ChessBoard board = new ChessBoard();
             board.resetBoard();
             return String.format("joined game as " + position + "\n" + drawBoard(board.getBoard()));
         }
-        throw new ResponseException(400, "Error: bad request");
+        throw new RuntimeException("Error: please provide a game number. " +
+                "If you are joining a game to play, provide a valid color too.");
     }
     public String logout() throws ResponseException {
         serverFacade.logout();

@@ -135,7 +135,7 @@ public class Client {
         ArrayList<AbbreviatedGameData> gameList = serverFacade.list();
         StringBuilder returnList = new StringBuilder("Current chess games:\n");
         for(AbbreviatedGameData game:gameList) {
-            returnList.append(String.format("gameID: %d, whiteUsername: %s, blackUsername: %s, gameName: %s"
+            returnList.append(String.format("gameID: %d, whiteUsername: %s, blackUsername: %s, gameName: %s\n"
                     , game.gameID(), game.whiteUsername(), game.blackUsername(), game.gameName()));
         }
         return returnList.toString();
@@ -172,93 +172,12 @@ public class Client {
         for(int i = 8; i >= 0; --i) {
             for(int j = 0; j < 9; ++j) {
                 drawWhiteView(i, j, whiteView, board);
-                /*if(i == 0 && j == 0) {
-                    whiteView.append("\u001b[30;107;1m    a  b  c  d  e  f  g  h \u001b[39;49;0m\n");
-                }
-                if(i > 0) {
-                    String background = null;
-                    if((i % 2) == (j % 2)) {
-                        background = "102;1m";
-                    }
-                    if((i % 2) != (j % 2)) {
-                        background = "100;1m";
-                    }
-                    if(board[i - 1][j - 1] != null) {
-                        ChessPiece piece = board[i - 1][j - 1];
-                        String pieceColor = null;
-                        if(piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
-                            pieceColor = "\u001b[37;";
-                        }
-                        if(piece.getTeamColor() == ChessGame.TeamColor.BLACK) {
-                            pieceColor = "\u001b[30;";
-                        }
-                        String pieceType = null;
-                        switch (piece.getPieceType()) {
-                            case PAWN -> pieceType = " P ";
-                            case ROOK -> pieceType = " R ";
-                            case KNIGHT -> pieceType = " N ";
-                            case BISHOP -> pieceType = " B ";
-                            case KING -> pieceType = " K ";
-                            case QUEEN -> pieceType = " Q ";
-                        }
-                        whiteView.append(String.format(pieceColor + background + pieceType));
-                    }
-                    if(board[i - 1][j - 1] == null) {
-                        whiteView.append(String.format("\u001b[" + background + "   "));
-                    }
-                    if(j == 8) {
-                        whiteView.append("\u001b[39;49;0m\n");
-                    }
-                }*/
             }
         }
         StringBuilder blackView = new StringBuilder();
         for(int i = 0; i < 9; ++i) {
             for(int j = 8; j >= 0; --j) {
                 drawBlackView(i, j, blackView, board);
-                /*if(i == 8 && j == 8) {
-                    blackView.append("\u001b[30;107;1m    h  g  f  e  d  c  b  a \u001b[39;49;0m\n");
-                }
-                if(i < 8) {
-                    if(j == 8) {
-                        blackView.append(String.format("\u001b[30;107;1m %d ", (i + 1)));
-                    }
-                    if(j < 8) {
-                        String background = null;
-                        if((i % 2) == (j % 2)) {
-                            background = "102;1m";
-                        }
-                        if((i % 2) != (j % 2)) {
-                            background = "100;1m";
-                        }
-                        if(board[i][j] != null) {
-                            ChessPiece piece = board[i][j];
-                            String pieceColor = null;
-                            if(piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
-                                pieceColor = "\u001b[37;";
-                            }
-                            if(piece.getTeamColor() == ChessGame.TeamColor.BLACK) {
-                                pieceColor = "\u001b[30;";
-                            }
-                            String pieceType = null;
-                            switch (piece.getPieceType()) {
-                                case PAWN -> pieceType = " P ";
-                                case ROOK -> pieceType = " R ";
-                                case KNIGHT -> pieceType = " N ";
-                                case BISHOP -> pieceType = " B ";
-                                case KING -> pieceType = " K ";
-                                case QUEEN -> pieceType = " Q ";
-                            }
-                            blackView.append(String.format(pieceColor + background + pieceType));
-                        }
-                        if(board[i][j] == null) {
-                            blackView.append(String.format("\u001b[" + background + "   "));
-                        }
-                        if(j == 0) {
-                            blackView.append("\u001b[39;49;0m\n");
-                        }
-                    }
-                }*/
             }
         }
         return String.format(whiteView + "\u001b[39;49;0m\n" + blackView);
@@ -268,38 +187,43 @@ public class Client {
             whiteView.append("\u001b[30;107;1m    a  b  c  d  e  f  g  h \u001b[39;49;0m\n");
         }
         if(row > 0) {
-            String background = null;
-            if((row % 2) == (col % 2)) {
-                background = "102;1m";
+            if (col == 0) {
+                whiteView.append(String.format("\u001b[30;107;1m %d", row));
             }
-            if((row % 2) != (col % 2)) {
-                background = "100;1m";
-            }
-            if(board[row - 1][col - 1] != null) {
-                ChessPiece piece = board[row - 1][col - 1];
-                String pieceColor = null;
-                if(piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
-                    pieceColor = "\u001b[37;";
+            if (col > 0) {
+                String background = null;
+                if ((row % 2) == (col % 2)) {
+                    background = "102;1m";
                 }
-                if(piece.getTeamColor() == ChessGame.TeamColor.BLACK) {
-                    pieceColor = "\u001b[30;";
+                if ((row % 2) != (col % 2)) {
+                    background = "100;1m";
                 }
-                String pieceType = null;
-                switch (piece.getPieceType()) {
-                    case PAWN -> pieceType = " P ";
-                    case ROOK -> pieceType = " R ";
-                    case KNIGHT -> pieceType = " N ";
-                    case BISHOP -> pieceType = " B ";
-                    case KING -> pieceType = " K ";
-                    case QUEEN -> pieceType = " Q ";
+                if (board[row - 1][col - 1] != null) {
+                    ChessPiece piece = board[row - 1][col - 1];
+                    String pieceColor = null;
+                    if (piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
+                        pieceColor = "\u001b[37;";
+                    }
+                    if (piece.getTeamColor() == ChessGame.TeamColor.BLACK) {
+                        pieceColor = "\u001b[30;";
+                    }
+                    String pieceType = null;
+                    switch (piece.getPieceType()) {
+                        case PAWN -> pieceType = " P ";
+                        case ROOK -> pieceType = " R ";
+                        case KNIGHT -> pieceType = " N ";
+                        case BISHOP -> pieceType = " B ";
+                        case KING -> pieceType = " K ";
+                        case QUEEN -> pieceType = " Q ";
+                    }
+                    whiteView.append(String.format(pieceColor + background + pieceType));
                 }
-                whiteView.append(String.format(pieceColor + background + pieceType));
-            }
-            if(board[row - 1][col - 1] == null) {
-                whiteView.append(String.format("\u001b[" + background + "   "));
-            }
-            if(col == 8) {
-                whiteView.append("\u001b[39;49;0m\n");
+                if (board[row - 1][col - 1] == null) {
+                    whiteView.append(String.format("\u001b[" + background + "   "));
+                }
+                if (col == 8) {
+                    whiteView.append("\u001b[39;49;0m\n");
+                }
             }
         }
     }

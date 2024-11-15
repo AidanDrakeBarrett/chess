@@ -52,10 +52,12 @@ public class ServerFacade {
         return gameArray;
     }
     public void join(String gameID, ChessGame.TeamColor color) throws ResponseException {
-        String path = "/game";
-        var body = new Gson().toJson(new JoinRequests(color, Integer.parseInt(gameID)));
-        String method = "PUT";
-        sendRequest(path, method, body, authToken, null);
+        if(color != null) {
+            String path = "/game";
+            var body = new Gson().toJson(new JoinRequests(color, Integer.parseInt(gameID)));
+            String method = "PUT";
+            sendRequest(path, method, body, authToken, null);
+        }
     }
     public void logout() throws ResponseException {
         String path = "/session";

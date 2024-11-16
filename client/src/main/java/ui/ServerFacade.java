@@ -92,6 +92,8 @@ public class ServerFacade {
             }
             if(e.getStatusCode() == 403) {
                 throw new RuntimeException("Error: position already taken.");
+            } else {
+                throw new RuntimeException("Error: bad input");
             }
         }
     }
@@ -120,6 +122,8 @@ public class ServerFacade {
             http.connect();
             throwIfNotSuccessful(http);
             return readResponseBody(http, responseClass);
+        } catch(ResponseException e) {
+            throw e;
         } catch(Exception e) {
             throw new ResponseException(500, e.getMessage());
         }

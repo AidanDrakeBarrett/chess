@@ -192,11 +192,11 @@ public class Client {
     }
     private void drawWhiteView(int row, int col, StringBuilder whiteView, ChessPiece[][] board) {
         if(row == 0 && col == 0) {
-            whiteView.append("\u001b[30;107;1m   a  b  c  d  e  f  g  h \u001b[39;49;0m\n");
+            whiteView.append("\u001b[30;107;1m    a  b  c  d  e  f  g  h \u001b[39;49;0m\n");
         }
         if(row > 0) {
             if (col == 0) {
-                whiteView.append(String.format("\u001b[30;107;1m %d", row));
+                whiteView.append(String.format("\u001b[30;107;1m %d ", row));
             }
             if (col > 0) {
                 String background = null;

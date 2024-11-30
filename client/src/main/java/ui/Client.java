@@ -16,6 +16,7 @@ import static java.lang.Integer.parseInt;
 public class Client {
     private final ServerFacade serverFacade;
     private boolean loggedIn = false;
+    private boolean inGame = false;
     private int gameListSize = 0;
     public Client(String url) {
         serverFacade = new ServerFacade(url);
@@ -55,7 +56,7 @@ public class Client {
             helpCommands.append("help\n");
             helpCommands.append("\tdisplay possible commands\n");
         }
-        if(loggedIn) {
+        if(loggedIn && !inGame) {
             helpCommands.append("create <NAME>\n");
             helpCommands.append("\tstart a new game\n");
             helpCommands.append("list\n");

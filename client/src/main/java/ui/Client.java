@@ -15,11 +15,18 @@ import static java.lang.Integer.parseInt;
 
 public class Client {
     private final ServerFacade serverFacade;
-    private boolean loggedIn = false;
-    private boolean inGame = false;
+    private UserState state;
     private int gameListSize = 0;
+
+    private enum UserState {
+        LOGGED_OUT,
+        LOGGED_IN,
+        IN_GAME,
+        WATCHING
+    }
     public Client(String url) {
         serverFacade = new ServerFacade(url);
+        state = UserState.LOGGED_OUT;
     }
     public void run() {
         System.out.println("Welcome to my chess server. I don't know why you're still using cURL in 2024, but okay.\n");
@@ -46,7 +53,7 @@ public class Client {
     }
     public String help() {
         StringBuilder helpCommands = new StringBuilder();
-        if(!loggedIn) {
+        if(state == UserState.LOGGED_OUT) {
             helpCommands.append("register <USERNAME> <PASSWORD> <EMAIL>\n");
             helpCommands.append("\tcreate an account\n");
             helpCommands.append("login <USERNAME> <PASSWORD>\n");
@@ -56,7 +63,7 @@ public class Client {
             helpCommands.append("help\n");
             helpCommands.append("\tdisplay possible commands\n");
         }
-        if(loggedIn && !inGame) {
+        if(state == UserState.LOGGED_IN) {
             helpCommands.append("create <NAME>\n");
             helpCommands.append("\tstart a new game\n");
             helpCommands.append("list\n");
@@ -70,6 +77,29 @@ public class Client {
             helpCommands.append("\tleave the server\n");
             helpCommands.append("logout\n");
             helpCommands.append("\tlog out of your account\n");
+            helpCommands.append("help\n");
+            helpCommands.append("\tdisplay possible commands\n");
+        }
+        if(state == UserState.IN_GAME) {
+            helpCommands.append("make_move <START POSITION> <END POSITION>\n");
+            helpCommands.append("\tmove a piece from one square to another, formatting positions as so: a1.\n");
+            helpCommands.append("\tfor example: 'make_move b2 b3' would move the piece as b2 to b3.\n");
+            helpCommands.append("legal_moves <POSITION>\n");
+            helpCommands.append("\tenter a piece's position to see the places it can legally move be highlighted\n");
+            helpCommands.append("redraw\n");
+            helpCommands.append("\tshows the most recent board. Useful for seeing the game after someone moves\n");
+            helpCommands.append("resign\n");
+            helpCommands.append("\tasks if you want to resign. Yes means you forfeit and end the game for everyone.\n");
+            helpCommands.append("leave\n");
+            helpCommands.append("\tremoves you from the game without ending it\n");
+            helpCommands.append("help\n");
+            helpCommands.append("\tdisplay possible commands\n");
+        }
+        if(state == UserState.WATCHING) {
+            helpCommands.append("redraw\n");
+            helpCommands.append("\tshows the most recent board. Useful for seeing the game after someone moves\n");
+            helpCommands.append("leave\n");
+            helpCommands.append("\tremoves you from the game without ending it\n");
             helpCommands.append("help\n");
             helpCommands.append("\tdisplay possible commands\n");
         }
@@ -89,6 +119,11 @@ public class Client {
                 case "observe" -> join(params);
                 case "logout" -> logout();
                 case "quit" -> "quit";
+                case "make_move" -> makeMove(params);
+                case "legal_moves" -> legalMoves(params);
+                case "redraw" -> redraw();
+                case "resign" -> resign();
+                case "leave" -> leave();
                 default -> help();
             };
         } catch(RuntimeException e) {
@@ -102,7 +137,7 @@ public class Client {
             String email = params[2];
             UserData newUser = new UserData(username, password, email);
             serverFacade.register(newUser);
-            loggedIn = true;
+            state = UserState.LOGGED_IN;
             return String.format("Registered and signed in as %s.", username);
         }
         throw new RuntimeException("Error: make sure username, password, and email " +
@@ -114,7 +149,7 @@ public class Client {
             String password = params[1];
             UserData newLogin = new UserData(username, password, null);
             serverFacade.login(newLogin);
-            loggedIn = true;
+            state = UserState.LOGGED_IN;
             return String.format("Logged in as %s", username);
         }
         throw new RuntimeException("Error: make sure both username and password are written with a space between them");
@@ -173,7 +208,7 @@ public class Client {
     }
     public String logout() throws RuntimeException {
         serverFacade.logout();
-        loggedIn = false;
+        state = UserState.LOGGED_OUT;
         return String.format("logged out");
     }
     public String drawBoard(ChessPiece[][] board) {

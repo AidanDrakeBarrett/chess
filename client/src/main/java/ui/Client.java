@@ -172,7 +172,7 @@ public class Client {
         gameListSize = gameList.size();
         return returnListBuilder.toString();
     }
-    public String join(String... params) throws RuntimeException {
+    public String join(String... params) throws RuntimeException {//FIXME: APPARENTLY ONLY THE PLAYERS NEED THIS CODE, BUT IS IT WRONG FOR ME TO STILL FUNNEL EVERYONE THROUGH HERE? MAYBE NOT.
         if(params.length >= 1) {
             int gameNumber;
             try {
@@ -315,5 +315,20 @@ public class Client {
                 }
             }
         }
+    }
+    public String makeMove(String... params) {//FIXME: EVERY FUNCTION FROM THIS LINE ONWARDS NEEDS TO BE IMPLEMENTED. LIKELY, THE WEB SOCKET CLASSES WILL BE FORCED INTO IMPLEMENTATION.
+        return null;
+    }
+    public String legalMoves(String... params) {
+        return null;
+    }
+    public String redraw() {
+        return null;
+    }
+    public String resign() {
+        return null;
+    }
+    public String leave() {
+        return null;
     }
 }

@@ -6,7 +6,8 @@ import chess.ChessGame;
 import records.JoinRequests;
 import records.ResponseException;
 import com.google.gson.Gson;
-import websocket.messages.ServerMessage;
+import websocket.messages.*;
+import websocket.commands.*;
 
 import java.io.IOException;
 import java.net.URI;
@@ -15,7 +16,7 @@ import java.net.URISyntaxException;
 public class WebSocketFacade extends Endpoint {
     private Session session;
     private ServerMessageHandler serverMessageHandler;
-    private final int gameID = -1;
+    private int gameID;
 
     public WebSocketFacade(String url) throws ResponseException {
         try {
@@ -37,7 +38,15 @@ public class WebSocketFacade extends Endpoint {
     @Override
     public void onOpen(Session session, EndpointConfig endpointConfig) {
     }
-
+    public void joinGame(UserGameCommand.CommandType commtype, String authToken, int gameID) throws ResponseException {
+        try {
+            var command = new UserGameCommand(commtype, authToken, gameID);
+            this.session.getBasicRemote().sendText(new Gson().toJson(command));
+        } catch(IOException e) {
+            throw new ResponseException(500, e.getMessage());
+        }
+        this.gameID = gameID;
+    }
     public void makeMove() {}
     public void redraw() {}
     public void resign() {}

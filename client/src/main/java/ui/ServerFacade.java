@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import websocket.commands.*;
+
 public class ServerFacade {
     private String authToken = null;
     private HashMap<Integer, AbbreviatedGameData> safeGameIndex = new HashMap<>();
@@ -74,15 +76,18 @@ public class ServerFacade {
             throw new RuntimeException("Error: please login to see a list of games.");
         }
     }
-    public void join(int safeGameNumber, ChessGame.TeamColor color) throws RuntimeException {
+    public WebSocketFacade join(int safeGameNumber, ChessGame.TeamColor color) throws RuntimeException {
+        int gameID = safeGameIndex.get(safeGameNumber).gameID();
         try {
             if (color != null) {
                 String path = "/game";
-                int gameID = safeGameIndex.get(safeGameNumber).gameID();
                 var body = new Gson().toJson(new JoinRequests(color, gameID));
                 String method = "PUT";
                 sendRequest(path, method, body, authToken, null);
             }
+            WebSocketFacade ws = new WebSocketFacade(serverURL);
+            ws.joinGame(UserGameCommand.CommandType.CONNECT, authToken, gameID);
+            return ws;
         } catch(ResponseException e) {
             if(e.getStatusCode() == 400) {
                 throw new RuntimeException("Error: game does not exist.");
@@ -92,13 +97,13 @@ public class ServerFacade {
             }
             if(e.getStatusCode() == 403) {
                 throw new RuntimeException("Error: position already taken.");
+            }
+            if(e.getStatusCode() == 500) {
+                throw new RuntimeException("Error: failed to connect");
             } else {
                 throw new RuntimeException("Error: bad input");
             }
         }
-        try {
-            WebSocketFacade ws = new WebSocketFacade(serverURL);
-        } catch(Exception e) {}
     }
     public void logout() throws RuntimeException {
         try {

@@ -16,7 +16,7 @@ import static java.lang.Integer.parseInt;
 
 public class Client implements ServerMessageHandler {
     private final ServerFacade serverFacade;
-    private final WebSocketFacade ws = null;
+    private WebSocketFacade ws = null;
     private UserState state;
     private int gameListSize = 0;
 
@@ -200,13 +200,12 @@ public class Client implements ServerMessageHandler {
                     position = "black";
                 }
             }
-            serverFacade.join(gameNumber, color);
+            this.ws = serverFacade.join(gameNumber, color);
             if(color == null) {
                 state = UserState.WATCHING;
             } else {
                 state = UserState.IN_GAME;
             }
-
             ChessBoard board = new ChessBoard();
             board.resetBoard();
             return String.format("joined game as " + position + "\n" + drawBoard(board.getBoard()));
@@ -325,8 +324,8 @@ public class Client implements ServerMessageHandler {
         }
     }
     @Override
-    public void notify(ServerMessage message) {//FIXME: THIS NEEDS TO TAKE THE SERVER MESSAGE AND FIGURE OUT WHAT TO PRINT
-        System.out.println(message.message());
+    public void notify(ServerMessage message) {
+        System.out.println(message.getMessage());
         printPrompt();
     }
     public String makeMove(String... params) {//FIXME: EVERY FUNCTION FROM THIS LINE ONWARDS NEEDS TO BE IMPLEMENTED. LIKELY, THE WEB SOCKET CLASSES WILL BE FORCED INTO IMPLEMENTATION.

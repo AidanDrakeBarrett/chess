@@ -15,6 +15,7 @@ import static java.lang.Integer.parseInt;
 
 public class Client {
     private final ServerFacade serverFacade;
+    private final WebSocketFacade ws = null;
     private UserState state;
     private int gameListSize = 0;
 
@@ -199,6 +200,7 @@ public class Client {
                 }
             }
             serverFacade.join(gameNumber, color);
+
             ChessBoard board = new ChessBoard();
             board.resetBoard();
             return String.format("joined game as " + position + "\n" + drawBoard(board.getBoard()));

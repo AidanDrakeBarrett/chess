@@ -201,6 +201,11 @@ public class Client implements ServerMessageHandler {
                 }
             }
             serverFacade.join(gameNumber, color);
+            if(color == null) {
+                state = UserState.WATCHING;
+            } else {
+                state = UserState.IN_GAME;
+            }
 
             ChessBoard board = new ChessBoard();
             board.resetBoard();

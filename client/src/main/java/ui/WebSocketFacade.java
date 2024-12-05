@@ -2,6 +2,8 @@ package ui;
 
 import javax.websocket.*;
 
+import chess.ChessGame;
+import records.JoinRequests;
 import records.ResponseException;
 import com.google.gson.Gson;
 import websocket.messages.ServerMessage;
@@ -13,6 +15,7 @@ import java.net.URISyntaxException;
 public class WebSocketFacade extends Endpoint {
     private Session session;
     private ServerMessageHandler serverMessageHandler;
+    private final int gameID = -1;
 
     public WebSocketFacade(String url) throws ResponseException {
         try {
@@ -34,6 +37,7 @@ public class WebSocketFacade extends Endpoint {
     @Override
     public void onOpen(Session session, EndpointConfig endpointConfig) {
     }
+
     public void makeMove() {}
     public void redraw() {}
     public void resign() {}

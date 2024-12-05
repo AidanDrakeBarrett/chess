@@ -96,6 +96,9 @@ public class ServerFacade {
                 throw new RuntimeException("Error: bad input");
             }
         }
+        try {
+            WebSocketFacade ws = new WebSocketFacade(serverURL);
+        } catch(Exception e) {}
     }
     public void logout() throws RuntimeException {
         try {

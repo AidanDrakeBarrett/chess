@@ -48,7 +48,9 @@ public class WebSocketFacade extends Endpoint {
         this.gameID = gameID;
     }
     public void makeMove() {}
-    public void redraw() {}
+    public ChessGame updateClientGame() {
+        return null;
+    }
     public void resign() {}
     public void leave() {}
 }

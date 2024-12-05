@@ -247,13 +247,13 @@ public class Client implements ServerMessageHandler {
                     background = "102;1m";
                 }
                 if ((row % 2) != (col % 2)) {
-                    background = "100;1m";
+                    background = "47;1m";
                 }
                 if (board[row - 1][col - 1] != null) {
                     ChessPiece piece = board[row - 1][col - 1];
                     String pieceColor = null;
                     if (piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
-                        pieceColor = "\u001b[37;";
+                        pieceColor = "\u001b[15;";
                     }
                     if (piece.getTeamColor() == ChessGame.TeamColor.BLACK) {
                         pieceColor = "\u001b[30;";
@@ -292,13 +292,13 @@ public class Client implements ServerMessageHandler {
                     background = "102;1m";
                 }
                 if((row % 2) != (col % 2)) {
-                    background = "100;1m";
+                    background = "47;1m";
                 }
                 if(board[row][col] != null) {
                     ChessPiece piece = board[row][col];
                     String pieceColor = null;
                     if(piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
-                        pieceColor = "\u001b[37;";
+                        pieceColor = "\u001b[15;";
                     }
                     if(piece.getTeamColor() == ChessGame.TeamColor.BLACK) {
                         pieceColor = "\u001b[30;";

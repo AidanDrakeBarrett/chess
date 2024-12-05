@@ -9,7 +9,7 @@ public class Server {
 
         Spark.staticFiles.location("web");
 
-        Spark.webSocket();
+        //FIXME Spark.webSocket();
 
         // Register your endpoints and handle exceptions here.
         Spark.delete("/db", ClearAppHandler::clearApplication);

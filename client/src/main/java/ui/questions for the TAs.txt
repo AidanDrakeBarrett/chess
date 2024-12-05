@@ -1,2 +1,0 @@
--If a user logs out without leaving a game, should I allow him to rejoin that game if he logs back in,
-or should I automatically remove him from the game and allow someone else to take his place?

@@ -4,6 +4,7 @@ import chess.ChessBoard;
 import chess.ChessGame;
 import chess.ChessPiece;
 import records.*;
+import websocket.messages.ServerMessage;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,7 +14,7 @@ import java.util.Scanner;
 import static java.lang.Integer.parseInt;
 
 
-public class Client {
+public class Client implements ServerMessageHandler {
     private final ServerFacade serverFacade;
     private final WebSocketFacade ws = null;
     private UserState state;
@@ -318,9 +319,14 @@ public class Client {
             }
         }
     }
+    @Override
+    public void notify(ServerMessage message) {//FIXME: THIS NEEDS TO TAKE THE SERVER MESSAGE AND FIGURE OUT WHAT TO PRINT
+        System.out.println(message.message());
+        printPrompt();
+    }
     public String makeMove(String... params) {//FIXME: EVERY FUNCTION FROM THIS LINE ONWARDS NEEDS TO BE IMPLEMENTED. LIKELY, THE WEB SOCKET CLASSES WILL BE FORCED INTO IMPLEMENTATION.
         return null;
-    }
+    }//TODO: IMPLEMENT
     public String legalMoves(String... params) {
         return null;
     }

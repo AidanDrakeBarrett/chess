@@ -62,5 +62,10 @@ public class WebSocketHandler {
                 connections.sendToOne(username, error);
             } catch(IOException ex) {}
         }
+        GameData updatedGame = gameDAO.getGame(gameID);
+        ServerMessage gameUpdate = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, updatedGame);
+        try {
+            connections.broadcast(gameID, null, gameUpdate);
+        } catch(IOException e) {}
     }
 }

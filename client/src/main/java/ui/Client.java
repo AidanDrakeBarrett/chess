@@ -3,6 +3,7 @@ package ui;
 import chess.ChessBoard;
 import chess.ChessGame;
 import chess.ChessPiece;
+import chess.ChessPosition;
 import records.*;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
@@ -21,12 +22,12 @@ public class Client implements ServerMessageHandler {
     private UserState state;
     private int gameListSize = 0;
     private ChessGame game;
+    private ChessGame.TeamColor playerColor;
 
     private enum UserState {
         LOGGED_OUT,
         LOGGED_IN,
-        IN_GAME_WHITE,
-        IN_GAME_BLACK,
+        IN_GAME,
         WATCHING
     }
     public Client(String url) {
@@ -85,11 +86,12 @@ public class Client implements ServerMessageHandler {
             helpCommands.append("help\n");
             helpCommands.append("\tdisplay possible commands\n");
         }
-        if(state == UserState.IN_GAME_WHITE || state == UserState.IN_GAME_BLACK) {
-            helpCommands.append("make_move <START POSITION> <END POSITION>\n");
-            helpCommands.append("\tmove a piece from one square to another, formatting positions as so: a1.\n");
-            helpCommands.append("\tfor example: 'make_move b2 b3' would move the piece as b2 to b3.\n");
-            helpCommands.append("legal_moves <POSITION>\n");
+        if(state == UserState.IN_GAME) {
+            helpCommands.append("move <START POSITION> <END POSITION> <PROMOTION>\n");
+            helpCommands.append("\tmove a piece from one square to another, formatting positions like so: a1.\n");
+            helpCommands.append("\tfor example: 'move b2 b3' would move the piece at b2 to b3.\n");
+            helpCommands.append("\twrite the promotion using the new piece's letter: r, n, b, q\n");
+            helpCommands.append("legal <POSITION>\n");
             helpCommands.append("\tenter a piece's position to see the places it can legally move be highlighted\n");
             helpCommands.append("redraw\n");
             helpCommands.append("\tshows the most recent board. Useful for seeing the game after someone moves\n");
@@ -102,7 +104,7 @@ public class Client implements ServerMessageHandler {
         }
         if(state == UserState.WATCHING) {
             helpCommands.append("redraw\n");
-            helpCommands.append("\tshows the most recent board. Useful for seeing the game after someone moves\n");
+            helpCommands.append("\tredraws the most recent board\n");
             helpCommands.append("leave\n");
             helpCommands.append("\tremoves you from the game without ending it\n");
             helpCommands.append("help\n");
@@ -124,8 +126,8 @@ public class Client implements ServerMessageHandler {
                 case "observe" -> join(params);
                 case "logout" -> logout();
                 case "quit" -> "quit";
-                case "make_move" -> makeMove(params);
-                case "legal_moves" -> legalMoves(params);
+                case "move" -> makeMove(params);
+                case "legal" -> legalMoves(params);
                 case "redraw" -> redraw();
                 case "resign" -> resign();
                 case "leave" -> leave();
@@ -177,7 +179,7 @@ public class Client implements ServerMessageHandler {
         gameListSize = gameList.size();
         return returnListBuilder.toString();
     }
-    public String join(String... params) throws RuntimeException {//FIXME: APPARENTLY ONLY THE PLAYERS NEED THIS CODE, BUT IS IT WRONG FOR ME TO STILL FUNNEL EVERYONE THROUGH HERE? MAYBE NOT.
+    public String join(String... params) throws RuntimeException {
         if(params.length >= 1) {
             int gameNumber;
             try {
@@ -210,10 +212,12 @@ public class Client implements ServerMessageHandler {
                 throw new RuntimeException("Error: failed to connect.");
             }
             if(color == ChessGame.TeamColor.WHITE) {
-                state = UserState.IN_GAME_WHITE;
+                state = UserState.IN_GAME;
+                playerColor = ChessGame.TeamColor.WHITE;
             }
             if(color == ChessGame.TeamColor.BLACK) {
-                state = UserState.IN_GAME_BLACK;
+                state = UserState.IN_GAME;
+                playerColor = ChessGame.TeamColor.BLACK;
             }
             if(color == null) {
                 state = UserState.WATCHING;
@@ -228,16 +232,19 @@ public class Client implements ServerMessageHandler {
         state = UserState.LOGGED_OUT;
         return String.format("logged out");
     }
-    public String drawBoard(ChessPiece[][] board, ChessGame.TeamColor color) {
+    public String drawBoard(ChessPiece[][] board) {
         StringBuilder view = new StringBuilder();
-        if(color == ChessGame.TeamColor.WHITE) {
+        if(playerColor == ChessGame.TeamColor.WHITE || state == UserState.WATCHING) {
             for (int i = 8; i >= 0; --i) {
                 for (int j = 0; j < 9; ++j) {
                     drawWhiteView(i, j, view, board);
                 }
             }
         }
-        if(color == ChessGame.TeamColor.BLACK) {
+        if(state == UserState.WATCHING) {
+            view.append("\u001b[39;49;0m\n");
+        }
+        if(playerColor == ChessGame.TeamColor.BLACK || state == UserState.WATCHING) {
             for (int i = 0; i < 9; ++i) {
                 for (int j = 8; j >= 0; --j) {
                     drawBlackView(i, j, view, board);
@@ -346,23 +353,46 @@ public class Client implements ServerMessageHandler {
         }
         if(message.getServerMessageType() == ServerMessage.ServerMessageType.LOAD_GAME) {
             this.game = message.getGame().chessGame();
-            if(state == UserState.IN_GAME_WHITE) {
-                System.out.print(drawBoard(game.getBoard().getBoard(), ChessGame.TeamColor.WHITE));
-            }
-            if(state == UserState.IN_GAME_BLACK) {
-                System.out.print(drawBoard(game.getBoard().getBoard(), ChessGame.TeamColor.BLACK));
-            }
+            System.out.print(redraw());
         }
         printPrompt();
     }
     public String makeMove(String... params) {//FIXME: EVERY FUNCTION FROM THIS LINE ONWARDS NEEDS TO BE IMPLEMENTED. LIKELY, THE WEB SOCKET CLASSES WILL BE FORCED INTO IMPLEMENTATION.
+        if(params.length >= 2) {
+            String start = params[0];
+            String end = params[1];
+            ChessPosition startPos = coordParser(start);
+            if(game.getBoard().getPiece(startPos).getTeamColor() != playerColor) {
+                throw new RuntimeException("Error: %s is not your piece.\n");
+            }
+            ChessPosition endPos = coordParser(end);
+        }
         return null;
-    }//TODO: IMPLEMENT
+    }
+    private ChessPosition coordParser(String coord) throws RuntimeException {
+        if(coord.length() == 2) {
+            char file = coord.charAt(0);
+            char rank = coord.charAt(1);
+            int col = file;
+            if(col < 97 || col > 104) {
+                throw new RuntimeException(String.format("Error: %s is not within 'a'-'h.'\n", file));
+            }
+            int row = parseInt(String.valueOf(rank));
+            if(row < 1 || row > 8) {
+                throw new RuntimeException(String.format("Error: %s is not within 1-8\n", rank));
+            }
+            return new ChessPosition(row, col);
+        }
+        throw new RuntimeException(String.format("Error: %s is not a valid position.\n", coord));
+    }
     public String legalMoves(String... params) {
         return null;
     }
     public String redraw() {
-        return null;
+        if(state == UserState.IN_GAME || state == UserState.WATCHING) {
+            return drawBoard(game.getBoard().getBoard());
+        }
+        throw new RuntimeException("Error: you must be playing or watching a game.\n");
     }
     public String resign() {
         return null;
@@ -370,4 +400,5 @@ public class Client implements ServerMessageHandler {
     public String leave() {
         return null;
     }
+
 }

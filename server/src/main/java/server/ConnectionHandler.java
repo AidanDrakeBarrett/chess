@@ -22,7 +22,7 @@ public class ConnectionHandler {
 
     public void broadcast(int gameID, String excludeUsername, ServerMessage serverMessage) throws IOException {
         for (var c : connections.values()) {
-            if(c.session.isOpen()) {
+            if (c.session.isOpen()) {
                 if(c.gameID == gameID && !c.getUsername().equals(excludeUsername)) {
                     c.send(new Gson().toJson(serverMessage));
                 }

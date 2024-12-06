@@ -1,5 +1,6 @@
 package dataaccess;
 
+import chess.ChessBoard;
 import chess.ChessGame;
 
 import com.google.gson.Gson;
@@ -206,5 +207,20 @@ public class SQLGameDAO implements GameDAO{
             } catch(SQLException e) {}
         } catch(SQLException | DataAccessException e) {}
         return null;
+    }
+    public void updateBoard(int gameID, ChessGame game) {
+        try(var conn = DatabaseManager.getConnection()) {
+            var statement = """
+                UPDATE GameData
+                SET chessGame = ?
+                WHERE id = ?;
+                """;
+            try(var preparedStatement = conn.prepareStatement(statement)) {
+                var gameJson = new Gson().toJson(game);
+                preparedStatement.setString(1, gameJson);
+                preparedStatement.setInt(2, gameID);
+                preparedStatement.executeUpdate();
+            } catch(SQLException e) {}
+        } catch(SQLException | DataAccessException e) {}
     }
 }

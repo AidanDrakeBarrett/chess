@@ -3,6 +3,7 @@ package ui;
 import javax.websocket.*;
 
 import chess.ChessGame;
+import chess.ChessMove;
 import records.JoinRequests;
 import records.ResponseException;
 import com.google.gson.Gson;
@@ -50,7 +51,14 @@ public class WebSocketFacade extends Endpoint {
             throw new ResponseException(500, e.getMessage());
         }
     }
-    public void makeMove() {}
+    public void makeMove(ChessMove move) throws ResponseException {
+        try {
+            var command = new UserGameCommand(UserGameCommand.CommandType.MAKE_MOVE, authToken, gameID);
+            this.session.getBasicRemote().sendText(new Gson().toJson(command));
+        } catch(IOException e) {
+            throw new ResponseException(500, e.getMessage());
+        }
+    }
     public void resign() {}
     public void leave() {}
     public ChessGame getChessGame() {

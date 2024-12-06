@@ -7,6 +7,7 @@ import dataaccess.SQLGameDAO;
 import dataaccess.SQLUserDAO;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
+import records.GameData;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
 
@@ -28,8 +29,7 @@ public class WebSocketHandler {
     }
     private void connect(Session session, String authToken, int gameID) {
         String username = authDAO.getUsername(authToken);
-        ChessGame game = gameDAO.getGame(gameID).chessGame();
-        String gameString = new Gson().toJson(game);
+        GameData game = gameDAO.getGame(gameID);
         connections.add(gameID, username, session);
         String userJoined;
         if(gameDAO.getGame(gameID).blackUsername().equals(username)) {
@@ -41,9 +41,10 @@ public class WebSocketHandler {
             userJoined = username + " joined the game as an observer\n";
         }
         ServerMessage joinNotice = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, userJoined);
-        ServerMessage gameLoad = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameString);
+        ServerMessage gameLoad = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, game);
         try {
             connections.broadcast(gameID, username, joinNotice);
+            connections.sendToOne(username, gameLoad);
         } catch(IOException e) {}
     }
 }

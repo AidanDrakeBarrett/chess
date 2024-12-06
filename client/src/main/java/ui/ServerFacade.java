@@ -85,8 +85,7 @@ public class ServerFacade {
                 String method = "PUT";
                 sendRequest(path, method, body, authToken, null);
             }
-            WebSocketFacade ws = new WebSocketFacade(serverURL);
-            ws.joinGame(UserGameCommand.CommandType.CONNECT, authToken, gameID);
+            WebSocketFacade ws = new WebSocketFacade(serverURL, authToken, gameID);
             return ws;
         } catch(ResponseException e) {
             if(e.getStatusCode() == 400) {
@@ -97,9 +96,6 @@ public class ServerFacade {
             }
             if(e.getStatusCode() == 403) {
                 throw new RuntimeException("Error: position already taken.");
-            }
-            if(e.getStatusCode() == 500) {
-                throw new RuntimeException("Error: failed to connect");
             } else {
                 throw new RuntimeException("Error: bad input");
             }

@@ -17,8 +17,12 @@ public class WebSocketFacade extends Endpoint {
     private Session session;
     private ServerMessageHandler serverMessageHandler;
     private int gameID;
+    private String authToken;
+    private ChessGame chessGame = null;
 
-    public WebSocketFacade(String url) throws ResponseException {
+    public WebSocketFacade(String url, String authToken, int gameID) throws ResponseException {
+        this.authToken = authToken;
+        this.gameID = gameID;
         try {
             url = url.replace("http", "ws");
             URI socketURI = new URI(url + "/ws");
@@ -27,8 +31,8 @@ public class WebSocketFacade extends Endpoint {
             this.session.addMessageHandler(new MessageHandler.Whole<String>() {
                 @Override
                 public void onMessage(String message) {
-                    ServerMessage notification = new Gson().fromJson(message, ServerMessage.class);
-                    serverMessageHandler.notify(notification);
+                    ServerMessage serverMessage = new Gson().fromJson(message, ServerMessage.class);
+                    serverMessageHandler.notify(serverMessage);
                 }
             });
         } catch(DeploymentException | IOException | URISyntaxException ex) {
@@ -38,19 +42,19 @@ public class WebSocketFacade extends Endpoint {
     @Override
     public void onOpen(Session session, EndpointConfig endpointConfig) {
     }
-    public void joinGame(UserGameCommand.CommandType commtype, String authToken, int gameID) throws ResponseException {
+    public void joinGame(UserGameCommand.CommandType commtype) throws ResponseException {
         try {
             var command = new UserGameCommand(commtype, authToken, gameID);
             this.session.getBasicRemote().sendText(new Gson().toJson(command));
         } catch(IOException e) {
             throw new ResponseException(500, e.getMessage());
         }
-        this.gameID = gameID;
     }
     public void makeMove() {}
-    public ChessGame updateClientGame() {
-        return null;
-    }
+    public void updateClientGame() {    }
     public void resign() {}
     public void leave() {}
+    public ChessGame getChessGame() {
+        return chessGame;
+    }
 }

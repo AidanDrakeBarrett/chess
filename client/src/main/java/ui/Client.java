@@ -4,6 +4,7 @@ import chess.ChessBoard;
 import chess.ChessGame;
 import chess.ChessPiece;
 import records.*;
+import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
 
 import java.util.ArrayList;
@@ -19,11 +20,13 @@ public class Client implements ServerMessageHandler {
     private WebSocketFacade ws = null;
     private UserState state;
     private int gameListSize = 0;
+    private ChessGame game;
 
     private enum UserState {
         LOGGED_OUT,
         LOGGED_IN,
-        IN_GAME,
+        IN_GAME_WHITE,
+        IN_GAME_BLACK,
         WATCHING
     }
     public Client(String url) {
@@ -82,7 +85,7 @@ public class Client implements ServerMessageHandler {
             helpCommands.append("help\n");
             helpCommands.append("\tdisplay possible commands\n");
         }
-        if(state == UserState.IN_GAME) {
+        if(state == UserState.IN_GAME_WHITE || state == UserState.IN_GAME_BLACK) {
             helpCommands.append("make_move <START POSITION> <END POSITION>\n");
             helpCommands.append("\tmove a piece from one square to another, formatting positions as so: a1.\n");
             helpCommands.append("\tfor example: 'make_move b2 b3' would move the piece as b2 to b3.\n");
@@ -201,14 +204,21 @@ public class Client implements ServerMessageHandler {
                 }
             }
             this.ws = serverFacade.join(gameNumber, color);
+            try {
+                ws.joinGame(UserGameCommand.CommandType.CONNECT);
+            } catch(Exception e) {
+                throw new RuntimeException("Error: failed to connect.");
+            }
+            if(color == ChessGame.TeamColor.WHITE) {
+                state = UserState.IN_GAME_WHITE;
+            }
+            if(color == ChessGame.TeamColor.BLACK) {
+                state = UserState.IN_GAME_BLACK;
+            }
             if(color == null) {
                 state = UserState.WATCHING;
-            } else {
-                state = UserState.IN_GAME;
             }
-            ChessBoard board = new ChessBoard();
-            board.resetBoard();
-            return String.format("joined game as " + position + "\n" + drawBoard(board.getBoard()));
+            return String.format("joined game as " + position + "\n");
         }
         throw new RuntimeException("Error: please provide a game number. " +
                 "If you are joining a game to play, provide a valid color too.");
@@ -218,20 +228,23 @@ public class Client implements ServerMessageHandler {
         state = UserState.LOGGED_OUT;
         return String.format("logged out");
     }
-    public String drawBoard(ChessPiece[][] board) {
-        StringBuilder whiteView = new StringBuilder();
-        for(int i = 8; i >= 0; --i) {
-            for(int j = 0; j < 9; ++j) {
-                drawWhiteView(i, j, whiteView, board);
+    public String drawBoard(ChessPiece[][] board, ChessGame.TeamColor color) {
+        StringBuilder view = new StringBuilder();
+        if(color == ChessGame.TeamColor.WHITE) {
+            for (int i = 8; i >= 0; --i) {
+                for (int j = 0; j < 9; ++j) {
+                    drawWhiteView(i, j, view, board);
+                }
             }
         }
-        StringBuilder blackView = new StringBuilder();
-        for(int i = 0; i < 9; ++i) {
-            for(int j = 8; j >= 0; --j) {
-                drawBlackView(i, j, blackView, board);
+        if(color == ChessGame.TeamColor.BLACK) {
+            for (int i = 0; i < 9; ++i) {
+                for (int j = 8; j >= 0; --j) {
+                    drawBlackView(i, j, view, board);
+                }
             }
         }
-        return String.format(whiteView + "\u001b[39;49;0m\n" + blackView);
+        return view.toString();
     }
     private void drawWhiteView(int row, int col, StringBuilder whiteView, ChessPiece[][] board) {
         if(row == 0 && col == 0) {
@@ -325,7 +338,21 @@ public class Client implements ServerMessageHandler {
     }
     @Override
     public void notify(ServerMessage message) {
-        System.out.println(message.getMessage());
+        if(message.getServerMessageType() == ServerMessage.ServerMessageType.NOTIFICATION) {
+            System.out.println(message.getMessage());
+        }
+        if(message.getServerMessageType() == ServerMessage.ServerMessageType.ERROR) {
+            System.out.println(message.getMessage());
+        }
+        if(message.getServerMessageType() == ServerMessage.ServerMessageType.LOAD_GAME) {
+            this.game = message.getGame().chessGame();
+            if(state == UserState.IN_GAME_WHITE) {
+                System.out.print(drawBoard(game.getBoard().getBoard(), ChessGame.TeamColor.WHITE));
+            }
+            if(state == UserState.IN_GAME_BLACK) {
+                System.out.print(drawBoard(game.getBoard().getBoard(), ChessGame.TeamColor.BLACK));
+            }
+        }
         printPrompt();
     }
     public String makeMove(String... params) {//FIXME: EVERY FUNCTION FROM THIS LINE ONWARDS NEEDS TO BE IMPLEMENTED. LIKELY, THE WEB SOCKET CLASSES WILL BE FORCED INTO IMPLEMENTATION.

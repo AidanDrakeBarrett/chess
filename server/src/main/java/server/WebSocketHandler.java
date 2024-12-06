@@ -27,7 +27,8 @@ public class WebSocketHandler {
         UserGameCommand command = new Gson().fromJson(message, UserGameCommand.class);
         switch(command.getCommandType()) {
             case CONNECT -> connect(session, command.getAuthToken(), command.getGameID());
-            case MAKE_MOVE -> makeMove(session, command.getAuthToken(), command.getGameID(), command.getMove());
+            case MAKE_MOVE -> makeMove(command.getAuthToken(), command.getGameID(), command.getMove());
+            case RESIGN -> resign(command.getAuthToken(), command.getGameID());
         }
     }
     private void connect(Session session, String authToken, int gameID) {
@@ -49,7 +50,7 @@ public class WebSocketHandler {
             connections.sendToOne(username, gameLoad);
         } catch(IOException e) {}
     }
-    private void makeMove(Session session, String authToken, int gameID, ChessMove move) {
+    private void makeMove(String authToken, int gameID, ChessMove move) {
         String username = authDAO.getUsername(authToken);
         GameData game = gameDAO.getGame(gameID);
         ChessGame theGame = game.chessGame();
@@ -67,5 +68,19 @@ public class WebSocketHandler {
         try {
             connections.broadcast(gameID, null, gameUpdate);
         } catch(IOException e) {}
+    }
+    private void resign(String authToken, int gameID) {
+        String username = authDAO.getUsername(authToken);
+        GameData game = gameDAO.getGame(gameID);
+        String letterOfRes = String.format("%s has resigned\n", username);
+        String acceptRes = "You have resigned\n";
+        ServerMessage resignation = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, letterOfRes);
+        ServerMessage acceptance = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, acceptRes);
+        try {
+            connections.broadcast(gameID, username, resignation);
+            connections.sendToOne(username, acceptance);
+        } catch(IOException e) {}
+        gameDAO.endGame(gameID);
+        connections.remove(username);
     }
 }

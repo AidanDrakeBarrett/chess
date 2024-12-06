@@ -467,7 +467,29 @@ public class Client implements ServerMessageHandler {
         throw new RuntimeException("Error: you must be playing or watching a game.\n");
     }
     public String resign() {
-        return null;
+        if(state == UserState.IN_GAME) {
+            Scanner scanner = new Scanner(System.in);
+            System.out.print("Are you sure you want to resign? This means forfeiting the game. <Y|YES|N|NO>\n");
+            String line = scanner.nextLine();
+            var token = line.toLowerCase().split(" ");
+            if(token.length > 0) {
+                if(Objects.equals(token[0], "y") || Objects.equals(token[0], "yes")) {
+                    try {
+                        ws.resign();
+                        state = UserState.LOGGED_IN;
+                        return null;
+                    } catch(Exception e) {
+                        throw new RuntimeException("Error: unknown\n");
+                    }
+                }
+                if(Objects.equals(token[0], "n") || Objects.equals(token[0], "no")) {
+                    return null;
+                } else {
+                    throw new RuntimeException("Error: invalid input\n");
+                }
+            }
+        }
+        throw new RuntimeException("Error: cannot resign if not in game\n");
     }
     public String leave() {
         return null;

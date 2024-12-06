@@ -19,6 +19,13 @@ public class ConnectionHandler {
     public void remove(String username) {
         connections.remove(username);
     }
+    public void removeConnections(int gameID) {
+        for(var c:connections.values()) {
+            if(c.gameID == gameID) {
+                connections.remove(c.getUsername());
+            }
+        }
+    }
 
     public void broadcast(int gameID, String excludeUsername, ServerMessage serverMessage) throws IOException {
         for (var c : connections.values()) {

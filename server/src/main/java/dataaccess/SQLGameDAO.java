@@ -24,6 +24,7 @@ public class SQLGameDAO implements GameDAO{
                 blackUsername VARCHAR(255),
                 gameName VARCHAR(255) NOT NULL,
                 chessGame VARCHAR(2047) NOT NULL,
+                isActive BOOLEAN NOT NULL,
                 PRIMARY KEY (id)
                 );
             """
@@ -63,8 +64,10 @@ public class SQLGameDAO implements GameDAO{
                         String blackUsername = rs.getString("blackUsername");
                         String gameName = rs.getString("gameName");
                         String gameJson = rs.getString("chessGame");
+                        boolean activity = rs.getBoolean("isActive");
                         ChessGame chessGame = new Gson().fromJson(gameJson, ChessGame.class);
-                        GameData returnGame = new GameData(id, whiteUsername, blackUsername, gameName, chessGame);
+                        GameData returnGame = new GameData(id, whiteUsername, blackUsername,
+                                gameName, chessGame, activity);
                         return returnGame;
                     }
                 } catch(SQLException e) {}
@@ -154,12 +157,13 @@ public class SQLGameDAO implements GameDAO{
             var gameJson = new Gson().toJson(game);
             var statement = """
                     INSERT INTO GameData
-                    (gameName, chessGame)
-                    VALUES (?, ?);
+                    (gameName, chessGame, isActive)
+                    VALUES (?, ?, ?);
                     """;
             try(var preparedStatement = conn.prepareStatement(statement)) {
                 preparedStatement.setString(1, gameName);
                 preparedStatement.setString(2, gameJson);
+                preparedStatement.setBoolean(3, true);
                 preparedStatement.executeUpdate();
                 return newGameIDQuery(gameName, conn);
             } catch(SQLException e) {}
@@ -190,7 +194,8 @@ public class SQLGameDAO implements GameDAO{
         try(var conn = DatabaseManager.getConnection()) {
             ArrayList<AbbreviatedGameData> games = new ArrayList<>();
             var statement = """
-                    SELECT * FROM GameData;
+                    SELECT * FROM GameData
+                    WHERE isActive = 0;
                     """;
             try(var preparedStatement = conn.prepareStatement(statement)) {
                 try(var rs = preparedStatement.executeQuery()) {
@@ -218,6 +223,20 @@ public class SQLGameDAO implements GameDAO{
             try(var preparedStatement = conn.prepareStatement(statement)) {
                 var gameJson = new Gson().toJson(game);
                 preparedStatement.setString(1, gameJson);
+                preparedStatement.setInt(2, gameID);
+                preparedStatement.executeUpdate();
+            } catch(SQLException e) {}
+        } catch(SQLException | DataAccessException e) {}
+    }
+    public void endGame(int gameID) {
+        try(var conn = DatabaseManager.getConnection()) {
+            var statement = """
+                UPDATE GameData
+                SET isActive = ?
+                WHERE id = ?;
+                """;
+            try(var preparedStatement = conn.prepareStatement(statement)) {
+                preparedStatement.setBoolean(1, false);
                 preparedStatement.setInt(2, gameID);
                 preparedStatement.executeUpdate();
             } catch(SQLException e) {}

@@ -79,7 +79,7 @@ public class ServerFacade {
     public WebSocketFacade join(int safeGameNumber, ChessGame.TeamColor color) throws RuntimeException {
         int gameID = safeGameIndex.get(safeGameNumber).gameID();
         try {
-            if (color != null) {
+            if(color != null) {
                 String path = "/game";
                 var body = new Gson().toJson(new JoinRequests(color, gameID));
                 String method = "PUT";

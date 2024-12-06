@@ -1,17 +1,11 @@
 package ui;
 
-import chess.ChessBoard;
-import chess.ChessGame;
-import chess.ChessPiece;
-import chess.ChessPosition;
+import chess.*;
 import records.*;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Scanner;
+import java.util.*;
 
 import static java.lang.Integer.parseInt;
 
@@ -91,6 +85,7 @@ public class Client implements ServerMessageHandler {
             helpCommands.append("\tmove a piece from one square to another, formatting positions like so: a1.\n");
             helpCommands.append("\tfor example: 'move b2 b3' would move the piece at b2 to b3.\n");
             helpCommands.append("\twrite the promotion using the new piece's letter: r, n, b, q\n");
+            helpCommands.append("\talternatively, you can write the name of the piece: rook, knight, etc.\n");
             helpCommands.append("legal <POSITION>\n");
             helpCommands.append("\tenter a piece's position to see the places it can legally move be highlighted\n");
             helpCommands.append("redraw\n");
@@ -232,12 +227,21 @@ public class Client implements ServerMessageHandler {
         state = UserState.LOGGED_OUT;
         return String.format("logged out");
     }
-    public String drawBoard(ChessPiece[][] board) {
+    public String drawBoard(ChessPiece[][] board, HashSet<ChessPosition> legalEnds, ChessPosition start) {
         StringBuilder view = new StringBuilder();
         if(playerColor == ChessGame.TeamColor.WHITE || state == UserState.WATCHING) {
             for (int i = 8; i >= 0; --i) {
                 for (int j = 0; j < 9; ++j) {
-                    drawWhiteView(i, j, view, board);
+                    if(start != null) {
+                        ChessPosition highlight = new ChessPosition(i, j);
+                        if(legalEnds.contains(highlight)) {
+                            drawWhiteView(i, j, true, false, view, board);
+                        } else {
+                            drawWhiteView(i, j, false, highlight.equals(start), view, board);
+                        }
+                    } else {
+                        drawWhiteView(i, j, false, false, view, board);
+                    }
                 }
             }
         }
@@ -247,35 +251,51 @@ public class Client implements ServerMessageHandler {
         if(playerColor == ChessGame.TeamColor.BLACK || state == UserState.WATCHING) {
             for (int i = 0; i < 9; ++i) {
                 for (int j = 8; j >= 0; --j) {
-                    drawBlackView(i, j, view, board);
+                    if(start != null) {
+                        ChessPosition highlight = new ChessPosition(i, j);
+                        if(legalEnds.contains(highlight)) {
+                            drawBlackView(i, j, true, false, view, board);
+                        } else {
+                            drawBlackView(i, j, false, highlight.equals(start), view, board);
+                        }
+                    } else {
+                        drawBlackView(i, j, false, false, view, board);
+                    }
                 }
             }
         }
         return view.toString();
     }
-    private void drawWhiteView(int row, int col, StringBuilder whiteView, ChessPiece[][] board) {
+    private void drawWhiteView(int row, int col, boolean end, boolean start, StringBuilder whiteView,
+                               ChessPiece[][] board) {
         if(row == 0 && col == 0) {
             whiteView.append("\u001b[30;107;1m    a  b  c  d  e  f  g  h \u001b[39;49;0m\n");
         }
         if(row > 0) {
-            if (col == 0) {
+            if(col == 0) {
                 whiteView.append(String.format("\u001b[30;107;1m %d ", row));
             }
-            if (col > 0) {
+            if(col > 0) {
                 String background = null;
-                if ((row % 2) == (col % 2)) {
+                if((row % 2) == (col % 2)) {
                     background = "102;1m";
                 }
-                if ((row % 2) != (col % 2)) {
+                if((row % 2) != (col % 2)) {
                     background = "47;1m";
                 }
-                if (board[row - 1][col - 1] != null) {
+                if(end) {
+                    background = "106;1m";
+                }
+                if(start) {
+                    background = "103;1m";
+                }
+                if(board[row - 1][col - 1] != null) {
                     ChessPiece piece = board[row - 1][col - 1];
                     String pieceColor = null;
-                    if (piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
+                    if(piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
                         pieceColor = "\u001b[15;";
                     }
-                    if (piece.getTeamColor() == ChessGame.TeamColor.BLACK) {
+                    if(piece.getTeamColor() == ChessGame.TeamColor.BLACK) {
                         pieceColor = "\u001b[30;";
                     }
                     String pieceType = null;
@@ -289,16 +309,17 @@ public class Client implements ServerMessageHandler {
                     }
                     whiteView.append(String.format(pieceColor + background + pieceType));
                 }
-                if (board[row - 1][col - 1] == null) {
+                if(board[row - 1][col - 1] == null) {
                     whiteView.append(String.format("\u001b[" + background + "   "));
                 }
-                if (col == 8) {
+                if(col == 8) {
                     whiteView.append("\u001b[39;49;0m\n");
                 }
             }
         }
     }
-    private void drawBlackView(int row, int col, StringBuilder blackView, ChessPiece[][] board) {
+    private void drawBlackView(int row, int col, boolean end, boolean start, StringBuilder blackView,
+                               ChessPiece[][] board) {
         if(row == 8 && col == 8) {
             blackView.append("\u001b[30;107;1m    h  g  f  e  d  c  b  a \u001b[39;49;0m\n");
         }
@@ -313,6 +334,12 @@ public class Client implements ServerMessageHandler {
                 }
                 if((row % 2) != (col % 2)) {
                     background = "47;1m";
+                }
+                if(end) {
+                    background = "106;1m";
+                }
+                if(start) {
+                    background = "103;1m";
                 }
                 if(board[row][col] != null) {
                     ChessPiece piece = board[row][col];
@@ -366,6 +393,18 @@ public class Client implements ServerMessageHandler {
                 throw new RuntimeException("Error: %s is not your piece.\n");
             }
             ChessPosition endPos = coordParser(end);
+            if(params.length == 3) {
+                if(game.getBoard().getPiece(startPos).getPieceType() != ChessPiece.PieceType.PAWN) {
+                    throw new RuntimeException("Error: this piece cannot be promoted\n");
+                }
+                if(playerColor == ChessGame.TeamColor.WHITE && endPos.getRow() != 8) {
+                    throw new RuntimeException("Error: this move cannot result in a promotion\n");
+                }
+                if(playerColor == ChessGame.TeamColor.BLACK && endPos.getRow() != 1) {
+                    throw new RuntimeException("Error: this move cannot result in a promotion\n");
+                }
+            }
+            //TODO: WEBSOCKET ME
         }
         return null;
     }
@@ -386,11 +425,21 @@ public class Client implements ServerMessageHandler {
         throw new RuntimeException(String.format("Error: %s is not a valid position.\n", coord));
     }
     public String legalMoves(String... params) {
-        return null;
+        if(params.length == 1) {
+            ChessPosition start = coordParser(params[0]);
+            HashSet<ChessMove> validMoves = (HashSet<ChessMove>) game.validMoves(start);
+            HashSet<ChessPosition> ends = new HashSet<>();
+            for(ChessMove move:validMoves) {
+                ends.add(move.getEndPosition());
+            }
+            System.out.print(drawBoard(game.getBoard().getBoard(), ends, start));
+            return null;
+        }
+        throw new RuntimeException("Error: bad input\n");
     }
     public String redraw() {
         if(state == UserState.IN_GAME || state == UserState.WATCHING) {
-            return drawBoard(game.getBoard().getBoard());
+            return drawBoard(game.getBoard().getBoard(), null, null);
         }
         throw new RuntimeException("Error: you must be playing or watching a game.\n");
     }

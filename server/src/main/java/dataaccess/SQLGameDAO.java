@@ -242,4 +242,9 @@ public class SQLGameDAO implements GameDAO{
             } catch(SQLException e) {}
         } catch(SQLException | DataAccessException e) {}
     }
+    public void removePlayer(int gameID, String colorColumn) {
+        try(var conn = DatabaseManager.getConnection()) {
+            playerInserter(null, colorColumn, gameID, conn);
+        } catch(SQLException | DataAccessException e) {}
+    }
 }

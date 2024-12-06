@@ -9,7 +9,6 @@ import java.util.*;
 
 import static java.lang.Integer.parseInt;
 
-
 public class Client implements ServerMessageHandler {
     private final ServerFacade serverFacade;
     private WebSocketFacade ws = null;
@@ -492,7 +491,15 @@ public class Client implements ServerMessageHandler {
         throw new RuntimeException("Error: cannot resign if not in game\n");
     }
     public String leave() {
-        return null;
+        try {
+            if (state == UserState.IN_GAME || state == UserState.WATCHING) {
+                ws.leave();
+                state = UserState.LOGGED_IN;
+                return null
+            }
+        } catch(Exception e) {
+            throw new RuntimeException("Error: unknown");
+        }
+        throw new RuntimeException("Error: cannot leave if not in game\n");
     }
-
 }

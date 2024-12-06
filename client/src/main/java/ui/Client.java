@@ -384,7 +384,7 @@ public class Client implements ServerMessageHandler {
         }
         printPrompt();
     }
-    public String makeMove(String... params) {//FIXME: EVERY FUNCTION FROM THIS LINE ONWARDS NEEDS TO BE IMPLEMENTED. LIKELY, THE WEB SOCKET CLASSES WILL BE FORCED INTO IMPLEMENTATION.
+    public String makeMove(String... params) throws RuntimeException {
         if(params.length >= 2) {
             String start = params[0];
             String end = params[1];
@@ -393,6 +393,7 @@ public class Client implements ServerMessageHandler {
                 throw new RuntimeException("Error: %s is not your piece.\n");
             }
             ChessPosition endPos = coordParser(end);
+            ChessPiece.PieceType promotion = null;
             if(params.length == 3) {
                 if(game.getBoard().getPiece(startPos).getPieceType() != ChessPiece.PieceType.PAWN) {
                     throw new RuntimeException("Error: this piece cannot be promoted\n");
@@ -403,10 +404,32 @@ public class Client implements ServerMessageHandler {
                 if(playerColor == ChessGame.TeamColor.BLACK && endPos.getRow() != 1) {
                     throw new RuntimeException("Error: this move cannot result in a promotion\n");
                 }
+                promotion = pieceParser(params[2]);
             }
-            //TODO: WEBSOCKET ME
+            ChessMove move = new ChessMove(startPos, endPos, promotion);
+            try {
+                ws.makeMove(move);
+            } catch(Exception e) {
+                throw new RuntimeException("Error: invalid move\n");
+            }
         }
         return null;
+    }
+    private ChessPiece.PieceType pieceParser(String piece) {
+        if(Objects.equals(piece, "r") || Objects.equals(piece, "rook")) {
+            return ChessPiece.PieceType.ROOK;
+        }
+        if(Objects.equals(piece, "n") || Objects.equals(piece, "knight")) {
+            return ChessPiece.PieceType.KNIGHT;
+        }
+        if(Objects.equals(piece, "b") || Objects.equals(piece, "bishop")) {
+            return ChessPiece.PieceType.BISHOP;
+        }
+        if(Objects.equals(piece, "q") || Objects.equals(piece, "queen")) {
+            return ChessPiece.PieceType.QUEEN;
+        } else {
+            throw new RuntimeException("Error: please provide a valid piece for promotion\n");
+        }
     }
     private ChessPosition coordParser(String coord) throws RuntimeException {
         if(coord.length() == 2) {

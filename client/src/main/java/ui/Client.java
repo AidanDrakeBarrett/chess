@@ -21,7 +21,8 @@ public class Client implements ServerMessageHandler {
         LOGGED_OUT,
         LOGGED_IN,
         IN_GAME,
-        WATCHING
+        WATCHING,
+        MAY_RESIGN
     }
     public Client(String url) {
         serverFacade = new ServerFacade(url);
@@ -111,22 +112,60 @@ public class Client implements ServerMessageHandler {
             var tokens = input.toLowerCase().split(" ");
             var cmd = (tokens.length > 0) ? tokens[0] : "help";
             var params = Arrays.copyOfRange(tokens, 1, tokens.length);
-            return switch (cmd) {
-                case "register" -> register(params);
-                case "login" -> login(params);
-                case "create" -> create(params);
-                case "list" -> list();
-                case "join" -> join(params);
-                case "observe" -> join(params);
-                case "logout" -> logout();
-                case "quit" -> "quit";
-                case "move" -> makeMove(params);
-                case "legal" -> legalMoves(params);
-                case "redraw" -> redraw();
-                case "resign" -> resign();
-                case "leave" -> leave();
-                default -> help();
-            };
+            if(state == UserState.LOGGED_OUT) {
+                return switch (cmd) {
+                    case "register" -> register(params);
+                    case "login" -> login(params);
+                    case "quit" -> "quit";
+                    case "create", "list", "join", "observe", "logout", "move", "legal", "redraw", "resign", "leave" ->
+                            "Error: you must be logged in to use that command\n";
+                    default -> help();
+                };
+            }
+            if(state == UserState.LOGGED_IN) {
+                return switch (cmd) {
+                    case "create" -> create(params);
+                    case "list" -> list();
+                    case "join" -> join(params);
+                    case "observe" -> join(params);
+                    case "quit" -> "quit";
+                    case "logout" -> logout();
+                    case "register", "login" -> "Error: you can not use that command while already logged in\n";
+                    case "move", "legal", "redraw", "resign", "leave" -> "Error: you must join a game to use that command\n";
+                    default -> help();
+                };
+            }
+            if(state == UserState.WATCHING) {
+                return switch (cmd) {
+                    case "redraw" -> redraw();
+                    case "leave" -> leave();
+                    case "register", "login" -> "Error: you can not use that command while already logged in\n";
+                    case "create", "list", "join", "observe", "quit", "logout" ->
+                            "Error: please leave your current game first\n";
+                    case "move", "legal", "resign" -> "Error: only players can use those commands\n";
+                    default -> help();
+                };
+            }
+            if(state == UserState.IN_GAME) {
+                return switch (cmd) {
+                    case "move" -> makeMove(params);
+                    case "legal" -> legalMoves(params);
+                    case "redraw" -> redraw();
+                    case "resign" -> resignPrompt();
+                    case "leave" -> leave();
+                    case "register", "login" ->
+                            "Error: you can not use that command while already logged in\n";
+                    case "create", "list", "join", "observe", "quit", "logout" -> "Error: please leave your current game first\n";
+                    default -> help();
+                };
+            }
+            if(state == UserState.MAY_RESIGN) {
+                return switch (cmd) {
+                    case "y", "yes" -> resign();
+                    case "n", "no" -> backToGame();
+                    default -> resignPrompt();
+                };
+            }
         } catch(RuntimeException e) {
             return e.getMessage();
         }
@@ -265,7 +304,7 @@ public class Client implements ServerMessageHandler {
         }
         return view.toString();
     }
-    private void drawWhiteView(int row, int col, boolean end, boolean start, StringBuilder whiteView,
+    private void drawWhiteView(int row, int col, boolean legalEnd, boolean startPos, StringBuilder whiteView,
                                ChessPiece[][] board) {
         if(row == 0 && col == 0) {
             whiteView.append("\u001b[30;107;1m    a  b  c  d  e  f  g  h \u001b[39;49;0m\n");
@@ -282,10 +321,10 @@ public class Client implements ServerMessageHandler {
                 if((row % 2) != (col % 2)) {
                     background = "47;1m";
                 }
-                if(end) {
+                if(legalEnd) {
                     background = "106;1m";
                 }
-                if(start) {
+                if(startPos) {
                     background = "103;1m";
                 }
                 if(board[row - 1][col - 1] != null) {
@@ -317,7 +356,7 @@ public class Client implements ServerMessageHandler {
             }
         }
     }
-    private void drawBlackView(int row, int col, boolean end, boolean start, StringBuilder blackView,
+    private void drawBlackView(int row, int col, boolean legalEnd, boolean startPos, StringBuilder blackView,
                                ChessPiece[][] board) {
         if(row == 8 && col == 8) {
             blackView.append("\u001b[30;107;1m    h  g  f  e  d  c  b  a \u001b[39;49;0m\n");
@@ -334,10 +373,10 @@ public class Client implements ServerMessageHandler {
                 if((row % 2) != (col % 2)) {
                     background = "47;1m";
                 }
-                if(end) {
+                if(legalEnd) {
                     background = "106;1m";
                 }
-                if(start) {
+                if(startPos) {
                     background = "103;1m";
                 }
                 if(board[row][col] != null) {
@@ -409,26 +448,19 @@ public class Client implements ServerMessageHandler {
             try {
                 ws.makeMove(move);
             } catch(Exception e) {
-                throw new RuntimeException("Error: invalid move\n");
+                throw new RuntimeException("Error: unknown\n");
             }
         }
         return null;
     }
     private ChessPiece.PieceType pieceParser(String piece) {
-        if(Objects.equals(piece, "r") || Objects.equals(piece, "rook")) {
-            return ChessPiece.PieceType.ROOK;
-        }
-        if(Objects.equals(piece, "n") || Objects.equals(piece, "knight")) {
-            return ChessPiece.PieceType.KNIGHT;
-        }
-        if(Objects.equals(piece, "b") || Objects.equals(piece, "bishop")) {
-            return ChessPiece.PieceType.BISHOP;
-        }
-        if(Objects.equals(piece, "q") || Objects.equals(piece, "queen")) {
-            return ChessPiece.PieceType.QUEEN;
-        } else {
-            throw new RuntimeException("Error: please provide a valid piece for promotion\n");
-        }
+        return switch (piece) {
+            case "r", "rook" -> ChessPiece.PieceType.ROOK;
+            case "n", "knight" -> ChessPiece.PieceType.KNIGHT;
+            case "b", "bishop" -> ChessPiece.PieceType.BISHOP;
+            case "q", "queen" -> ChessPiece.PieceType.QUEEN;
+            default -> throw new RuntimeException("Error: please provide a valid piece for promotion\n");
+        };
     }
     private ChessPosition coordParser(String coord) throws RuntimeException {
         if(coord.length() == 2) {
@@ -460,46 +492,32 @@ public class Client implements ServerMessageHandler {
         throw new RuntimeException("Error: bad input\n");
     }
     public String redraw() {
-        if(state == UserState.IN_GAME || state == UserState.WATCHING) {
-            return drawBoard(game.getBoard().getBoard(), null, null);
-        }
-        throw new RuntimeException("Error: you must be playing or watching a game.\n");
+        return drawBoard(game.getBoard().getBoard(), null, null);
+    }
+    public String resignPrompt() {
+        state = UserState.MAY_RESIGN;
+        return "Are you sure you want to resign? This means forfeiting the game. <Y|YES|N|NO>\n";
     }
     public String resign() {
-        if(state == UserState.IN_GAME) {
-            Scanner scanner = new Scanner(System.in);
-            System.out.print("Are you sure you want to resign? This means forfeiting the game. <Y|YES|N|NO>\n");
-            String line = scanner.nextLine();
-            var token = line.toLowerCase().split(" ");
-            if(token.length > 0) {
-                if(Objects.equals(token[0], "y") || Objects.equals(token[0], "yes")) {
-                    try {
-                        ws.resign();
-                        state = UserState.LOGGED_IN;
-                        return null;
-                    } catch(Exception e) {
-                        throw new RuntimeException("Error: unknown\n");
-                    }
-                }
-                if(Objects.equals(token[0], "n") || Objects.equals(token[0], "no")) {
-                    return null;
-                } else {
-                    throw new RuntimeException("Error: invalid input\n");
-                }
-            }
+        try {
+            ws.resign();
+            state = UserState.LOGGED_IN;
+            return null;
+        } catch(Exception e) {
+            throw new RuntimeException("Error: unknown\n");
         }
-        throw new RuntimeException("Error: cannot resign if not in game\n");
+    }
+    public String backToGame() {
+        state = UserState.IN_GAME;
+        return "You are still in the game\n";
     }
     public String leave() {
         try {
-            if (state == UserState.IN_GAME || state == UserState.WATCHING) {
-                ws.leave();
-                state = UserState.LOGGED_IN;
-                return null;
-            }
+            ws.leave();
+            state = UserState.LOGGED_IN;
+            return null;
         } catch(Exception e) {
             throw new RuntimeException("Error: unknown");
         }
-        throw new RuntimeException("Error: cannot leave if not in game\n");
     }
 }

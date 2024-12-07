@@ -495,7 +495,7 @@ public class Client implements ServerMessageHandler {
             if (state == UserState.IN_GAME || state == UserState.WATCHING) {
                 ws.leave();
                 state = UserState.LOGGED_IN;
-                return null
+                return null;
             }
         } catch(Exception e) {
             throw new RuntimeException("Error: unknown");

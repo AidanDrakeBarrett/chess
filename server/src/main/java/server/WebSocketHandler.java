@@ -1,12 +1,9 @@
 package server;
 
-import chess.ChessGame;
-import chess.ChessMove;
-import chess.InvalidMoveException;
+import chess.*;
 import com.google.gson.Gson;
 import dataaccess.SQLAuthDAO;
 import dataaccess.SQLGameDAO;
-import dataaccess.SQLUserDAO;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import records.GameData;
@@ -56,12 +53,17 @@ public class WebSocketHandler {
         String username = authDAO.getUsername(authToken);
         GameData game = gameDAO.getGame(gameID);
         ChessGame theGame = game.chessGame();
+        ChessPiece piece = theGame.getBoard().getPiece(move.getStartPosition());
+        String movedPiece = pieceName(piece.getPieceType());
+        String startingString = positionString(move.getStartPosition());
+        String endingString = positionString(move.getEndPosition());
         boolean wCheck = false;
         boolean wCheckmate = false;
         boolean wStalemate = false;
         boolean bCheck = false;
         boolean bCheckmate = false;
         boolean bStalemate = false;
+
         try {
             theGame.makeMove(move);
             wCheck = theGame.isInCheck(ChessGame.TeamColor.WHITE);
@@ -77,12 +79,70 @@ public class WebSocketHandler {
                 connections.sendToOne(username, error);
             } catch(IOException ex) {}
         }
+
         GameData updatedGame = gameDAO.getGame(gameID);
         ServerMessage gameUpdate = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, updatedGame);
 
+        StringBuilder aftermath = new StringBuilder(String.format("%s moved %s from %s to %s", username, movedPiece,
+                startingString, endingString));
+        if(move.getPromotionPiece() != null) {
+            aftermath.append(String.format(" and promoted it to %s", pieceName(move.getPromotionPiece())));
+        }
+        aftermath.append(".\n");
+        if(wCheckmate) {
+            aftermath.append("White is in checkmate.\n");
+            gameDAO.endGame(gameID);
+        }
+        if(bCheckmate) {
+            aftermath.append("Black is in checkmate.\n");
+            gameDAO.endGame(gameID);
+        }
+        if(!wCheckmate && !bCheckmate) {
+            if(wCheck) {
+                aftermath.append("White is in check.\n");
+            }
+            if(bCheck) {
+                aftermath.append("Black is in check.\n");
+            }
+            if(wStalemate && bStalemate) {
+                aftermath.append("The game is in stalemate.\n");
+                gameDAO.endGame(gameID);
+            }
+        }
+        ServerMessage aftermathMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION,
+                aftermath.toString());
+
         try {
             connections.broadcast(gameID, null, gameUpdate);
+            connections.broadcast(gameID, null, aftermathMessage);
         } catch(IOException e) {}
+    }
+    private String pieceName(ChessPiece.PieceType piece) {
+        switch (piece) {
+            case PAWN -> {
+                return "pawn";
+            }
+            case ROOK -> {
+                return "rook";
+            }
+            case KNIGHT -> {
+                return "knight";
+            }
+            case BISHOP -> {
+                return "bishop";
+            }
+            case QUEEN -> {
+                return "queen";
+            }
+            case KING -> {
+                return "king";
+            }
+        }
+        return null;
+    }
+    private String positionString(ChessPosition position) {
+        char file = (char) (position.getColumn() + 64);
+        return String.format("%s%d", file, position.getRow());
     }
     private void resign(String authToken, int gameID) {
         String username = authDAO.getUsername(authToken);
@@ -114,4 +174,5 @@ public class WebSocketHandler {
             connections.broadcast(gameID, username, leaveNotice);
         } catch(IOException e) {}
     }
+
 }

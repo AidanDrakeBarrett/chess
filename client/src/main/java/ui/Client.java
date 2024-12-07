@@ -4,9 +4,7 @@ import chess.*;
 import records.*;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
-
 import java.util.*;
-
 import static java.lang.Integer.parseInt;
 
 public class Client implements ServerMessageHandler {
@@ -16,7 +14,6 @@ public class Client implements ServerMessageHandler {
     private int gameListSize = 0;
     private ChessGame game;
     private ChessGame.TeamColor playerColor;
-
     private enum UserState {
         LOGGED_OUT,
         LOGGED_IN,
@@ -32,7 +29,6 @@ public class Client implements ServerMessageHandler {
         System.out.println("Welcome to my chess server. I don't know why you're still using cURL in 2024, but okay.\n");
         System.out.println("Try typing 'help' for commands\n");
         System.out.print(help());
-
         Scanner scanner = new Scanner(System.in);
         var result = "";
         while(!result.equals("quit")) {
@@ -89,7 +85,7 @@ public class Client implements ServerMessageHandler {
             helpCommands.append("legal <POSITION>\n");
             helpCommands.append("\tenter a piece's position to see the places it can legally move be highlighted\n");
             helpCommands.append("redraw\n");
-            helpCommands.append("\tshows the most recent board. Useful for seeing the game after someone moves\n");
+            helpCommands.append("\tredraws the board\n");
             helpCommands.append("resign\n");
             helpCommands.append("\tasks if you want to resign. Yes means you forfeit and end the game for everyone.\n");
             helpCommands.append("leave\n");
@@ -99,7 +95,7 @@ public class Client implements ServerMessageHandler {
         }
         if(state == UserState.WATCHING) {
             helpCommands.append("redraw\n");
-            helpCommands.append("\tredraws the most recent board\n");
+            helpCommands.append("\tredraws the board\n");
             helpCommands.append("leave\n");
             helpCommands.append("\tremoves you from the game without ending it\n");
             helpCommands.append("help\n");
@@ -126,12 +122,12 @@ public class Client implements ServerMessageHandler {
                 return switch (cmd) {
                     case "create" -> create(params);
                     case "list" -> list();
-                    case "join" -> join(params);
-                    case "observe" -> join(params);
+                    case "join", "observe" -> join(params);
                     case "quit" -> "quit";
                     case "logout" -> logout();
                     case "register", "login" -> "Error: you can not use that command while already logged in\n";
-                    case "move", "legal", "redraw", "resign", "leave" -> "Error: you must join a game to use that command\n";
+                    case "move", "legal", "redraw", "resign", "leave" ->
+                            "Error: you must join a game to use that command\n";
                     default -> help();
                 };
             }
@@ -155,7 +151,8 @@ public class Client implements ServerMessageHandler {
                     case "leave" -> leave();
                     case "register", "login" ->
                             "Error: you can not use that command while already logged in\n";
-                    case "create", "list", "join", "observe", "quit", "logout" -> "Error: please leave your current game first\n";
+                    case "create", "list", "join", "observe", "quit", "logout" ->
+                            "Error: please leave your current game first\n";
                     default -> help();
                 };
             }
@@ -169,6 +166,7 @@ public class Client implements ServerMessageHandler {
         } catch(RuntimeException e) {
             return e.getMessage();
         }
+        return null;
     }
     public String register(String... params) throws RuntimeException {
         if(params.length >= 3) {
@@ -263,7 +261,7 @@ public class Client implements ServerMessageHandler {
     public String logout() throws RuntimeException {
         serverFacade.logout();
         state = UserState.LOGGED_OUT;
-        return String.format("logged out");
+        return "logged out\n";
     }
     public String drawBoard(ChessPiece[][] board, HashSet<ChessPosition> legalEnds, ChessPosition start) {
         StringBuilder view = new StringBuilder();
@@ -314,37 +312,11 @@ public class Client implements ServerMessageHandler {
                 whiteView.append(String.format("\u001b[30;107;1m %d ", row));
             }
             if(col > 0) {
-                String background = null;
-                if((row % 2) == (col % 2)) {
-                    background = "102;1m";
-                }
-                if((row % 2) != (col % 2)) {
-                    background = "47;1m";
-                }
-                if(legalEnd) {
-                    background = "106;1m";
-                }
-                if(startPos) {
-                    background = "103;1m";
-                }
+                String background = backgroundColor(row, col, legalEnd, startPos);
                 if(board[row - 1][col - 1] != null) {
                     ChessPiece piece = board[row - 1][col - 1];
-                    String pieceColor = null;
-                    if(piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
-                        pieceColor = "\u001b[15;";
-                    }
-                    if(piece.getTeamColor() == ChessGame.TeamColor.BLACK) {
-                        pieceColor = "\u001b[30;";
-                    }
-                    String pieceType = null;
-                    switch (piece.getPieceType()) {
-                        case PAWN -> pieceType = " P ";
-                        case ROOK -> pieceType = " R ";
-                        case KNIGHT -> pieceType = " N ";
-                        case BISHOP -> pieceType = " B ";
-                        case KING -> pieceType = " K ";
-                        case QUEEN -> pieceType = " Q ";
-                    }
+                    String pieceColor = pieceColorer(piece);
+                    String pieceType = pieceTyper(piece);
                     whiteView.append(String.format(pieceColor + background + pieceType));
                 }
                 if(board[row - 1][col - 1] == null) {
@@ -366,37 +338,11 @@ public class Client implements ServerMessageHandler {
                 blackView.append(String.format("\u001b[30;107;1m %d ", (row + 1)));
             }
             if(col < 8) {
-                String background = null;
-                if((row % 2) == (col % 2)) {
-                    background = "102;1m";
-                }
-                if((row % 2) != (col % 2)) {
-                    background = "47;1m";
-                }
-                if(legalEnd) {
-                    background = "106;1m";
-                }
-                if(startPos) {
-                    background = "103;1m";
-                }
+                String background = backgroundColor(row, col, legalEnd, startPos);
                 if(board[row][col] != null) {
                     ChessPiece piece = board[row][col];
-                    String pieceColor = null;
-                    if(piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
-                        pieceColor = "\u001b[15;";
-                    }
-                    if(piece.getTeamColor() == ChessGame.TeamColor.BLACK) {
-                        pieceColor = "\u001b[30;";
-                    }
-                    String pieceType = null;
-                    switch (piece.getPieceType()) {
-                        case PAWN -> pieceType = " P ";
-                        case ROOK -> pieceType = " R ";
-                        case KNIGHT -> pieceType = " N ";
-                        case BISHOP -> pieceType = " B ";
-                        case KING -> pieceType = " K ";
-                        case QUEEN -> pieceType = " Q ";
-                    }
+                    String pieceColor = pieceColorer(piece);
+                    String pieceType = pieceTyper(piece);
                     blackView.append(String.format(pieceColor + background + pieceType));
                 }
                 if(board[row][col] == null) {
@@ -407,6 +353,37 @@ public class Client implements ServerMessageHandler {
                 }
             }
         }
+    }
+    private String backgroundColor(int row, int col, boolean legalEnd, boolean startPos) {
+        if(startPos) {
+            return "103;1m";
+        }
+        if(legalEnd) {
+            return "106;1m";
+        }
+        if((row % 2) == (col % 2)) {
+            return "102;1m";
+        }
+        if((row % 2) != (col % 2)) {
+            return "47;1m";
+        }
+        return null;
+    }
+    private String pieceTyper(ChessPiece piece) {
+        return switch (piece.getPieceType()) {
+            case PAWN -> " P ";
+            case ROOK -> " R ";
+            case KNIGHT -> " N ";
+            case BISHOP -> " B ";
+            case KING -> " K ";
+            case QUEEN -> " Q ";
+        };
+    }
+    private String pieceColorer(ChessPiece piece) {
+        return switch (piece.getTeamColor()) {
+            case WHITE -> "\u001b[15;";
+            case BLACK -> "\u001b[30;";
+        };
     }
     @Override
     public void notify(ServerMessage message) {
@@ -466,8 +443,8 @@ public class Client implements ServerMessageHandler {
         if(coord.length() == 2) {
             char file = coord.charAt(0);
             char rank = coord.charAt(1);
-            int col = file;
-            if(col < 97 || col > 104) {
+            int col = file - 96;
+            if(col < 1 || col > 8) {
                 throw new RuntimeException(String.format("Error: %s is not within 'a'-'h.'\n", file));
             }
             int row = parseInt(String.valueOf(rank));

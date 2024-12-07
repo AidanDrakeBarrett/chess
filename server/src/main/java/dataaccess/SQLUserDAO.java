@@ -51,13 +51,13 @@ public class SQLUserDAO implements UserDAO {
                         throw new DataAccessException("");
                     }
                 } catch(SQLException e) {
-                    throw new DataAccessException("");
+                    //throw new DataAccessException("");
                 }
             } catch(SQLException e) {
-                throw new DataAccessException("");
+                //throw new DataAccessException("");
             }
         } catch(SQLException e) {
-            throw new DataAccessException("");
+            //throw new DataAccessException("");
         }
         return false;
     }
@@ -87,10 +87,10 @@ public class SQLUserDAO implements UserDAO {
                     throw new DataAccessException("");
                 }
             } catch(SQLException e) {
-                throw new DataAccessException("");
+                //throw new DataAccessException("");
             }
         } catch(SQLException e) {
-            throw new DataAccessException("");
+            //throw new DataAccessException("");
         }
         throw new DataAccessException("unauthorized");
     }

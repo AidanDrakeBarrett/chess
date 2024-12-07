@@ -1,61 +1,38 @@
-return switch (cmd) {
-        case "register" -> register(params);
-        case "login" -> login(params);
-        case "create" -> create(params);
-        case "list" -> list();
-        case "join" -> join(params);
-        case "observe" -> join(params);
-        case "logout" -> logout();
-        case "quit" -> "quit";
-        case "move" -> makeMove(params);
-        case "legal" -> legalMoves(params);
-        case "redraw" -> redraw();
-        case "resign" -> resign();
-        case "leave" -> leave();
-        default -> help();
-};
-
-if(state == LOGGED_OUT) {
-    return switch (cmd) {
-        case "register" -> register(params);
-        case "login" -> login(params);
-        case "quit" -> "quit";
-        case "create", "list", "join", "observe", "logout", "move", "legal", "redraw", "resign", "leave" -> "Error: you must be logged in to use that command\n";
-        default -> help();
-    };
-}
-if(state == LOGGED_IN) {
-    return switch (cmd) {
-        case "create" -> create(params);
-        case "list" -> list();
-        case "join" -> join(params);
-        case "observe" -> join(params);
-        case "quit" -> "quit";
-        case "logout" -> logout();
-        case "register", "login" -> "Error: you can not use that command while already logged in\n";
-        case "move", "legal", "redraw", "resign", "leave" -> "Error: you must join a game to use that command\n";
-        default -> help();
-    };
-}
-if(state == WATCHING) {
-    return switch (cmd) {
-        case "redraw" -> redraw();
-        case "leave" -> leave();
-        case "register", "login" -> "Error: you can not use that command while already logged in\n";
-        case "create", "list", "join", "observe", "quit", "logout" -> "Error: please leave your current game first\n";
-        case "move", "legal", "resign" -> "Error: only players can use those commands\n";
-        default -> help();
-    };
-}
-if(state == IN_GAME) {
-    return switch (cmd) {
-        case "move" -> move(params);
-        case "legal" -> legal(params);
-        case "redraw" -> redraw();
-        case "resign" -> resign();
-        case "leave" -> leave();
-        case "register", "login" -> "Error: you can not use that command while already logged in\n";
-        case "create", "list", "join", "observe", "quit", "logout" -> "Error: please leave your current game first\n";
-        default -> help();
-    };
-}
+public void joinGame(String username, ChessGame.TeamColor clientColor, int gameID) throws DataAccessException {
+        try(var conn = DatabaseManager.getConnection()) {
+            var idQuery = """
+                    SELECT * FROM GameData
+                    WHERE id = ?;
+                    """;
+            try(var preparedIDQuery = conn.prepareStatement(idQuery)) {
+                boolean validID = false;
+                preparedIDQuery.setInt(1, gameID);
+                var rs = preparedIDQuery.executeQuery();
+                while(rs.next()) {
+                    int checkedID = rs.getInt("gameID");
+                    if(checkedID == gameID) {
+                        validID = true;
+                        if(clientColor == ChessGame.TeamColor.WHITE || clientColor == ChessGame.TeamColor.BLACK) {
+                            String columnLabel = null
+                            if(clientColor == ChessGame.TeamColor.WHITE) {
+                                columnLabel = "whiteUsername";
+                            }
+                            if(clientColor == ChessGame.TeamColor.BLACK) {
+                                columnLabel = "blackUsername";
+                            }
+                            String currentPlayer = rs.getString(columnLabel);
+                            if(Objects.equals(currentPlayer, null)) {
+                                playerInserter(username, columnLabel, gameID, conn);
+                                return;
+                            }
+                            throw new DataAccessException("Error: already taken");
+                        }
+                        break;
+                    }
+                }
+                if(!validID) {
+                    throw new DataAccessException("Error: bad request");
+                }
+            } catch(SQLException e) {}
+        } catch(SQLException e) {}
+    }

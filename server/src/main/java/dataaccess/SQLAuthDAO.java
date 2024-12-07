@@ -45,15 +45,10 @@ public class SQLAuthDAO implements AuthDAO {
                 preparedStatement.setString(1, userAuth);
                 try(var rs = preparedStatement.executeQuery()) {
                     return authResultSetProcessing(rs, userAuth);
-                } catch(SQLException e) {
-                    throw new DataAccessException("");
-                }
-            } catch(SQLException e) {
-                throw new DataAccessException("");
-            }
-        } catch(SQLException e) {
-            throw new DataAccessException("Error: unauthorized");
-        }
+                } catch(SQLException e) {}
+            } catch(SQLException e) {}
+        } catch(SQLException | DataAccessException e) {}
+        return false;
     }
     private boolean authResultSetProcessing(ResultSet rs, String userAuth) throws DataAccessException, SQLException {
         while(rs.next()) {
@@ -75,8 +70,7 @@ public class SQLAuthDAO implements AuthDAO {
                 preparedStatement.setString(1, authToken);
                 preparedStatement.executeUpdate();
             } catch(SQLException e) {}
-        } catch(SQLException e) {}
-        catch (DataAccessException e) {}
+        } catch(SQLException | DataAccessException e) {}
     }
 
     @Override

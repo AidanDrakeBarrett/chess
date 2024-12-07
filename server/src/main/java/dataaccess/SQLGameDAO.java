@@ -32,8 +32,7 @@ public class SQLGameDAO implements GameDAO{
     public SQLGameDAO() {
         try {
             DatabaseManager.configureDatabase(createStatements);
-        } catch(ResponseException e) {}
-        catch(DataAccessException e) {}
+        } catch(ResponseException | DataAccessException e) {}
     }
     @Override
     public void clearData() {
@@ -44,8 +43,7 @@ public class SQLGameDAO implements GameDAO{
             try(var preparedStatement = conn.prepareStatement(statement)) {
                 preparedStatement.executeUpdate();
             } catch(SQLException e) {}
-        } catch(SQLException e) {}
-        catch(DataAccessException e) {}
+        } catch(SQLException | DataAccessException e) {}
     }
 
     @Override
@@ -70,15 +68,54 @@ public class SQLGameDAO implements GameDAO{
                                 gameName, chessGame, activity);
                         return returnGame;
                     }
-                } catch(SQLException e) {}
+                } catch(SQLException e) {
+                    throw new DataAccessException("");
+                }
             } catch(SQLException e) {}
-        } catch(SQLException e) {}
-        catch(DataAccessException e) {}
+        } catch(SQLException | DataAccessException e) {}
         return null;
     }
 
     @Override
     public void joinGame(String username, ChessGame.TeamColor clientColor, int gameID) throws DataAccessException {
+        try(var conn = DatabaseManager.getConnection()) {
+            var idQuery = """
+                    SELECT * FROM GameData
+                    WHERE id = ?;
+                    """;
+            try(var preparedIDQuery = conn.prepareStatement(idQuery)) {
+                boolean validID = false;
+                preparedIDQuery.setInt(1, gameID);
+                var rs = preparedIDQuery.executeQuery();
+                while(rs.next()) {
+                    int checkedID = rs.getInt("gameID");
+                    if(checkedID == gameID) {
+                        validID = true;
+                        if(clientColor == ChessGame.TeamColor.WHITE || clientColor == ChessGame.TeamColor.BLACK) {
+                            String columnLabel = null;
+                            if(clientColor == ChessGame.TeamColor.WHITE) {
+                                columnLabel = "whiteUsername";
+                            }
+                            if(clientColor == ChessGame.TeamColor.BLACK) {
+                                columnLabel = "blackUsername";
+                            }
+                            String currentPlayer = rs.getString(columnLabel);
+                            if(Objects.equals(currentPlayer, null)) {
+                                playerInserter(username, columnLabel, gameID, conn);
+                                return;
+                            }
+                            throw new DataAccessException("Error: already taken");
+                        }
+                        break;
+                    }
+                }
+                if(!validID) {
+                    throw new DataAccessException("Error: bad request");
+                }
+            } catch(SQLException e) {}
+        } catch(SQLException e) {}
+    }
+    /*public void joinGame(String username, ChessGame.TeamColor clientColor, int gameID) throws DataAccessException {
         try(var conn = DatabaseManager.getConnection()) {
             var idQuery = """
                     SELECT * FROM GameData
@@ -134,7 +171,7 @@ public class SQLGameDAO implements GameDAO{
                 throw new DataAccessException("Error: bad request");
             }
         } catch(SQLException e) {}
-    }
+    }*/
     private void playerInserter(String username, String colorColumn, int gameID, Connection conn) throws SQLException {
         var statement = """
                 UPDATE GameData SET
@@ -160,33 +197,17 @@ public class SQLGameDAO implements GameDAO{
                     (gameName, chessGame, isActive)
                     VALUES (?, ?, ?);
                     """;
-            try(var preparedStatement = conn.prepareStatement(statement)) {
+            try(var preparedStatement = conn.prepareStatement(statement, Statement.RETURN_GENERATED_KEYS)) {
                 preparedStatement.setString(1, gameName);
                 preparedStatement.setString(2, gameJson);
                 preparedStatement.setBoolean(3, true);
                 preparedStatement.executeUpdate();
-                return newGameIDQuery(gameName, conn);
+                var rs = preparedStatement.getGeneratedKeys();
+                int newGameID = rs.getInt(1);
+                return newGameID;
             } catch(SQLException e) {}
-        } catch(SQLException e) {}
-        catch(DataAccessException e) {}
+        } catch(SQLException |DataAccessException e) {}
         return 0;
-    }
-    private int newGameIDQuery(String gameName, Connection conn) throws SQLException {
-        String statement = """
-                SELECT id FROM GameData
-                WHERE gameName = ?;
-                """;
-        try(var preparedStatement = conn.prepareStatement(statement)) {
-            preparedStatement.setString(1, gameName);
-            var rs = preparedStatement.executeQuery();
-            int newID = 0;
-            while(rs.next()) {
-                if(newID < rs.getInt("id")) {
-                    newID = rs.getInt("id");
-                }
-            }
-            return newID;
-        }
     }
 
     @Override

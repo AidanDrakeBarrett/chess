@@ -91,44 +91,6 @@ public class SQLGameDAO implements GameDAO{
                     int checkedID = rs.getInt("gameID");
                     if(checkedID == gameID) {
                         validID = true;
-                        if(clientColor == ChessGame.TeamColor.WHITE || clientColor == ChessGame.TeamColor.BLACK) {
-                            String columnLabel = null;
-                            if(clientColor == ChessGame.TeamColor.WHITE) {
-                                columnLabel = "whiteUsername";
-                            }
-                            if(clientColor == ChessGame.TeamColor.BLACK) {
-                                columnLabel = "blackUsername";
-                            }
-                            String currentPlayer = rs.getString(columnLabel);
-                            if(Objects.equals(currentPlayer, null)) {
-                                playerInserter(username, columnLabel, gameID, conn);
-                                return;
-                            }
-                            throw new DataAccessException("Error: already taken");
-                        }
-                        break;
-                    }
-                }
-                if(!validID) {
-                    throw new DataAccessException("Error: bad request");
-                }
-            } catch(SQLException e) {}
-        } catch(SQLException e) {}
-    }
-    /*public void joinGame(String username, ChessGame.TeamColor clientColor, int gameID) throws DataAccessException {
-        try(var conn = DatabaseManager.getConnection()) {
-            var idQuery = """
-                    SELECT * FROM GameData
-                    WHERE id = ?;
-                    """;
-            try(var preparedIDQuery = conn.prepareStatement(idQuery)) {
-                boolean validID = false;
-                preparedIDQuery.setInt(1, gameID);
-                var rs = preparedIDQuery.executeQuery();
-                while(rs.next()) {
-                    int checkedID = rs.getInt("gameID");
-                    if(checkedID == gameID) {
-                        validID = true;
                         break;
                     }
                 }
@@ -171,7 +133,7 @@ public class SQLGameDAO implements GameDAO{
                 throw new DataAccessException("Error: bad request");
             }
         } catch(SQLException e) {}
-    }*/
+    }
     private void playerInserter(String username, String colorColumn, int gameID, Connection conn) throws SQLException {
         var statement = """
                 UPDATE GameData SET
@@ -203,6 +165,7 @@ public class SQLGameDAO implements GameDAO{
                 preparedStatement.setBoolean(3, true);
                 preparedStatement.executeUpdate();
                 var rs = preparedStatement.getGeneratedKeys();
+                rs.next();
                 int newGameID = rs.getInt(1);
                 return newGameID;
             } catch(SQLException e) {}
@@ -216,7 +179,7 @@ public class SQLGameDAO implements GameDAO{
             ArrayList<AbbreviatedGameData> games = new ArrayList<>();
             var statement = """
                     SELECT * FROM GameData
-                    WHERE isActive = 0;
+                    WHERE isActive = 1;
                     """;
             try(var preparedStatement = conn.prepareStatement(statement)) {
                 try(var rs = preparedStatement.executeQuery()) {

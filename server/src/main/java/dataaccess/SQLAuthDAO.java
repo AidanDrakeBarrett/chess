@@ -47,7 +47,7 @@ public class SQLAuthDAO implements AuthDAO {
                     return authResultSetProcessing(rs, userAuth);
                 } catch(SQLException e) {}
             } catch(SQLException e) {}
-        } catch(SQLException | DataAccessException e) {}
+        } catch(SQLException e) {}
         return false;
     }
     private boolean authResultSetProcessing(ResultSet rs, String userAuth) throws DataAccessException, SQLException {

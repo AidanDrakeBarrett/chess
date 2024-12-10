@@ -20,6 +20,10 @@ public class WebSocketHandler {
     private final ConnectionHandler connections = new ConnectionHandler();
     SQLAuthDAO authDAO = new SQLAuthDAO();
     SQLGameDAO gameDAO = new SQLGameDAO();
+    /*public enum NullDataType {
+        BAD_GAME,
+        BAD_USER_AUTH
+    }*/
 
     @OnWebSocketMessage
     public void onMessage(Session session, String message) throws IOException {
@@ -34,6 +38,15 @@ public class WebSocketHandler {
     private void connect(Session session, String authToken, int gameID) {
         String username = authDAO.getUsername(authToken);
         GameData game = gameDAO.getGame(gameID);
+        if(username == null) {//this may or may not work for everything. It seems that SQL does not mind returning null.
+            badUserAuth(session);
+            return;
+        }
+        if(game == null) {
+            badGameID(session, gameID);
+            return;
+        }
+
         connections.add(gameID, username, session);
         String userJoined;
         if(gameDAO.getGame(gameID).blackUsername().equals(username)) {
@@ -175,5 +188,20 @@ public class WebSocketHandler {
             connections.broadcast(gameID, username, leaveNotice);
         } catch(IOException e) {}
     }
-
+    private void badGameID(Session session, int gameID) {
+        String errorMsg = String.format("Error: %d is not a valid game number\n", gameID);
+        ServerMessage gameIDError = new ServerMessage(ServerMessage.ServerMessageType.ERROR);
+        gameIDError.setErrorMessage(errorMsg);
+        try {
+            connections.sendBadAuthOrID(session, gameIDError);
+        } catch(IOException e) {}
+    }
+    private void badUserAuth(Session session) {
+        String errorMsg = "Error: unauthorized\n";
+        ServerMessage userAuthError = new ServerMessage(ServerMessage.ServerMessageType.ERROR);
+        userAuthError.setErrorMessage(errorMsg);
+        try {
+            connections.sendBadAuthOrID(session, userAuthError);
+        } catch(IOException e) {}
+    }
 }

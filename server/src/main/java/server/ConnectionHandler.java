@@ -44,6 +44,9 @@ public class ConnectionHandler {
             connections.remove(c.username);
         }
     }
+    public void sendBadAuthOrID(Session session,ServerMessage serverMessage) throws IOException {
+        Connection.sendBySession(session, new Gson().toJson(serverMessage));
+    }
     /*public void broadcast(int gameID, String excludeUsername, ServerMessage serverMessage) throws IOException {
         for (var c : connections.values()) {
             if (c.session.isOpen()) {

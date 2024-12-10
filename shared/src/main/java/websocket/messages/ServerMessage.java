@@ -29,6 +29,7 @@ public class ServerMessage {
         this.message = message;
     }
     public ServerMessage(ServerMessageType type, GameData game) {
+        this.serverMessageType = type;
         this.game = game;
     }
 

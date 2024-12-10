@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import dataaccess.SQLAuthDAO;
 import dataaccess.SQLGameDAO;
 import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import records.GameData;
 import websocket.commands.UserGameCommand;
@@ -20,7 +21,7 @@ public class WebSocketHandler {
     SQLAuthDAO authDAO = new SQLAuthDAO();
     SQLGameDAO gameDAO = new SQLGameDAO();
 
-    @OnMessage
+    @OnWebSocketMessage
     public void onMessage(Session session, String message) throws IOException {
         UserGameCommand command = new Gson().fromJson(message, UserGameCommand.class);
         switch(command.getCommandType()) {

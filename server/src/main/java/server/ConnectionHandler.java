@@ -20,13 +20,7 @@ public class ConnectionHandler {
     public void remove(String username) {
         connections.remove(username);
     }
-    public void removeConnections(int gameID) {
-        for(var c:connections.values()) {
-            if(c.gameID == gameID) {
-                connections.remove(c.getUsername());
-            }
-        }
-    }
+
     public void broadcast(int gameID, String excludeUsername, ServerMessage serverMessage) throws IOException {
         var removeList = new ArrayList<Connection>();
         for (var c : connections.values()) {
@@ -47,17 +41,6 @@ public class ConnectionHandler {
     public void sendBadAuthOrID(Session session,ServerMessage serverMessage) throws IOException {
         Connection.sendBySession(session, new Gson().toJson(serverMessage));
     }
-    /*public void broadcast(int gameID, String excludeUsername, ServerMessage serverMessage) throws IOException {
-        for (var c : connections.values()) {
-            if (c.session.isOpen()) {
-                if(c.gameID == gameID && !c.getUsername().equals(excludeUsername)) {
-                    c.send(new Gson().toJson(serverMessage));
-                }
-            } else {
-                connections.remove(c.getUsername());
-            }
-        }
-    }*/
     public void sendToOne(String username, ServerMessage serverMessage) throws IOException {
         var c = connections.get(username);
         c.send(new Gson().toJson(serverMessage));

@@ -11,7 +11,6 @@ import records.GameData;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
 
-import javax.websocket.OnMessage;
 import java.io.IOException;
 import java.util.Objects;
 
@@ -32,7 +31,7 @@ public class WebSocketHandler {
             case CONNECT -> connect(session, command.getAuthToken(), command.getGameID());
             case MAKE_MOVE -> makeMove(session, command.getAuthToken(), command.getGameID(), command.getMove());
             case RESIGN -> resign(session, command.getAuthToken(), command.getGameID());
-            case LEAVE -> leave(command.getAuthToken(), command.getGameID());
+            case LEAVE -> leave(session, command.getAuthToken(), command.getGameID());
         }
     }
     private void connect(Session session, String authToken, int gameID) {
@@ -189,9 +188,12 @@ public class WebSocketHandler {
         } catch(IOException e) {}
         connections.remove(username);
     }
-    private void leave(String authToken, int gameID) {
+    private void leave(Session session, String authToken, int gameID) {
         String username = authDAO.getUsername(authToken);
         GameData game = gameDAO.getGame(gameID);
+        if(gateKeep(session, game, username, gameID)) {
+            return;
+        }
         String colorColumn = null;
         if(Objects.equals(game.whiteUsername(), username)) {
             colorColumn = "whiteUsername";
@@ -200,11 +202,13 @@ public class WebSocketHandler {
             colorColumn = "blackUsername";
         }
         gameDAO.removePlayer(gameID, colorColumn);
+        connections.remove(username);
         String leaveMessage = String.format("%s has left the game\n", username);
         ServerMessage leaveNotice = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, leaveMessage);
         try {
             connections.broadcast(gameID, username, leaveNotice);
         } catch(IOException e) {}
+
     }
     private boolean gateKeep(Session session, GameData game, String username, int gameID) {
         if(username == null) {

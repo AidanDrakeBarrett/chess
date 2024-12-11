@@ -24,11 +24,12 @@ public class SQLGameDAO implements GameDAO{
                 blackUsername VARCHAR(255),
                 gameName VARCHAR(255) NOT NULL,
                 chessGame VARCHAR(2047) NOT NULL,
-                isActive BOOLEAN NOT NULL,
+                isActive BOOLEAN,
                 PRIMARY KEY (id)
                 );
             """
     };
+
     public SQLGameDAO() {
         try {
             DatabaseManager.configureDatabase(createStatements);
@@ -62,10 +63,10 @@ public class SQLGameDAO implements GameDAO{
                         String blackUsername = rs.getString("blackUsername");
                         String gameName = rs.getString("gameName");
                         String gameJson = rs.getString("chessGame");
-                        boolean activity = rs.getBoolean("isActive");
+                        boolean isActive = rs.getBoolean("isActive");
                         ChessGame chessGame = new Gson().fromJson(gameJson, ChessGame.class);
                         GameData returnGame = new GameData(id, whiteUsername, blackUsername,
-                                gameName, chessGame, activity);
+                                gameName, chessGame, isActive);
                         return returnGame;
                     }
                 } catch(SQLException e) {
@@ -179,9 +180,10 @@ public class SQLGameDAO implements GameDAO{
             ArrayList<AbbreviatedGameData> games = new ArrayList<>();
             var statement = """
                     SELECT * FROM GameData
-                    WHERE isActive = 1;
+                    WHERE isActive = ?;
                     """;
             try(var preparedStatement = conn.prepareStatement(statement)) {
+                preparedStatement.setBoolean(1, true);
                 try(var rs = preparedStatement.executeQuery()) {
                     while(rs.next()) {
                         int id = rs.getInt("id");

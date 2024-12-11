@@ -30,20 +30,15 @@ public class WebSocketHandler {
         UserGameCommand command = new Gson().fromJson(message, UserGameCommand.class);
         switch(command.getCommandType()) {
             case CONNECT -> connect(session, command.getAuthToken(), command.getGameID());
-            case MAKE_MOVE -> makeMove(command.getAuthToken(), command.getGameID(), command.getMove());
-            case RESIGN -> resign(command.getAuthToken(), command.getGameID());
+            case MAKE_MOVE -> makeMove(session, command.getAuthToken(), command.getGameID(), command.getMove());
+            case RESIGN -> resign(session, command.getAuthToken(), command.getGameID());
             case LEAVE -> leave(command.getAuthToken(), command.getGameID());
         }
     }
     private void connect(Session session, String authToken, int gameID) {
         String username = authDAO.getUsername(authToken);
         GameData game = gameDAO.getGame(gameID);
-        if(username == null) {//this may or may not work for everything. It seems that SQL does not mind returning null.
-            badUserAuth(session);
-            return;
-        }
-        if(game == null) {
-            badGameID(session, gameID);
+        if(gateKeep(session, game, username, gameID)) {
             return;
         }
 
@@ -63,9 +58,16 @@ public class WebSocketHandler {
             connections.sendToOne(username, gameLoad);
         } catch(IOException e) {}
     }
-    private void makeMove(String authToken, int gameID, ChessMove move) {
+    private void makeMove(Session session, String authToken, int gameID, ChessMove move) {
         String username = authDAO.getUsername(authToken);
         GameData game = gameDAO.getGame(gameID);
+        if(gateKeep(session, game, username, gameID)) {
+            return;
+        }
+        if(gameplayGateKeep(session, game, username)) {
+            return;
+        }
+
         ChessGame theGame = game.chessGame();
         ChessPiece piece = theGame.getBoard().getPiece(move.getStartPosition());
         String movedPiece = pieceName(piece.getPieceType());
@@ -88,10 +90,12 @@ public class WebSocketHandler {
             bStalemate = theGame.isInStalemate(ChessGame.TeamColor.BLACK);
             gameDAO.updateBoard(gameID, theGame);
         } catch(InvalidMoveException e) {
-            ServerMessage error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, e.getMessage());
+            ServerMessage error = new ServerMessage(ServerMessage.ServerMessageType.ERROR);
+            error.setErrorMessage(e.getMessage());
             try {
                 connections.sendToOne(username, error);
             } catch(IOException ex) {}
+            return;
         }
 
         GameData updatedGame = gameDAO.getGame(gameID);
@@ -128,7 +132,7 @@ public class WebSocketHandler {
 
         try {
             connections.broadcast(gameID, null, gameUpdate);
-            connections.broadcast(gameID, null, aftermathMessage);
+            connections.broadcast(gameID, username, aftermathMessage);
         } catch(IOException e) {}
     }
     private String pieceName(ChessPiece.PieceType piece) {
@@ -158,8 +162,15 @@ public class WebSocketHandler {
         char file = (char) (position.getColumn() + 64);
         return String.format("%s%d", file, position.getRow());
     }
-    private void resign(String authToken, int gameID) {
+    private void resign(Session session, String authToken, int gameID) {
         String username = authDAO.getUsername(authToken);
+        GameData game = gameDAO.getGame(gameID);
+        if(gateKeep(session, game, username, gameID)) {
+            return;
+        }
+        if(gameplayGateKeep(session, game, username)) {
+            return;
+        }
         String letterOfRes = String.format("%s has resigned\n", username);
         String acceptRes = "You have resigned\n";
         ServerMessage resignation = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, letterOfRes);
@@ -188,6 +199,46 @@ public class WebSocketHandler {
             connections.broadcast(gameID, username, leaveNotice);
         } catch(IOException e) {}
     }
+    private boolean gateKeep(Session session, GameData game, String username, int gameID) {
+        if(username == null) {
+            String message = "Error: unauthorized\n";
+            badUser(session, message);
+            return true;
+        }
+        if(game == null) {
+            badGameID(session, gameID);
+            return true;
+        }
+        return false;
+    }
+    private boolean gameplayGateKeep(Session session, GameData game, String username) {
+        if(!game.isActive()) {
+            String message = "The game is over. Go home, bro.\n";
+            badUser(session, message);
+            return true;
+        }
+        if(!Objects.equals(game.blackUsername(), username) && !Objects.equals(game.whiteUsername(), username)) {
+            String message = "Sit DOWN! You are NOT a player.\n";
+            badUser(session, message);
+            return true;
+        }
+        ChessGame.TeamColor whoseTurn = game.chessGame().getTeamTurn();
+        if(Objects.equals(username, game.whiteUsername())) {
+            if(whoseTurn != ChessGame.TeamColor.WHITE) {
+                String message = "Wait your turn\n";
+                badUser(session, message);
+                return true;
+            }
+        }
+        if(Objects.equals(username, game.blackUsername())) {
+            if(whoseTurn != ChessGame.TeamColor.BLACK) {
+                String message = "Wait your turn\n";
+                badUser(session, message);
+                return true;
+            }
+        }
+        return false;
+    }
     private void badGameID(Session session, int gameID) {
         String errorMsg = String.format("Error: %d is not a valid game number\n", gameID);
         ServerMessage gameIDError = new ServerMessage(ServerMessage.ServerMessageType.ERROR);
@@ -196,8 +247,7 @@ public class WebSocketHandler {
             connections.sendBadAuthOrID(session, gameIDError);
         } catch(IOException e) {}
     }
-    private void badUserAuth(Session session) {
-        String errorMsg = "Error: unauthorized\n";
+    private void badUser(Session session, String errorMsg) {
         ServerMessage userAuthError = new ServerMessage(ServerMessage.ServerMessageType.ERROR);
         userAuthError.setErrorMessage(errorMsg);
         try {

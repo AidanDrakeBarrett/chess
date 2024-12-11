@@ -50,7 +50,7 @@ public class ServerFacadeTests {
     void createPositive() {
         String gameName = "new_game";
         facade.create(gameName);
-        GameData expectedGame = new GameData(1, null, null, "new_game", new ChessGame());
+        GameData expectedGame = new GameData(1, null, null, "new_game", new ChessGame(), true);
         assertFalse(()->gameDAO.listGames().isEmpty());
     }
     @Test

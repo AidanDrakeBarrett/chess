@@ -168,7 +168,14 @@ public class WebSocketHandler {
         if(gateKeep(session, game, username, gameID)) {
             return;
         }
-        if(gameplayGateKeep(session, game, username)) {
+        if(!game.isActive()) {
+            String message = "The game is over. Go home, bro.\n";
+            badUser(session, message);
+            return;
+        }
+        if(!Objects.equals(game.blackUsername(), username) && !Objects.equals(game.whiteUsername(), username)) {
+            String message = "Sit DOWN! You are NOT a player.\n";
+            badUser(session, message);
             return;
         }
         String letterOfRes = String.format("%s has resigned\n", username);

@@ -4,7 +4,6 @@ import javax.websocket.*;
 
 import chess.ChessGame;
 import chess.ChessMove;
-import records.JoinRequests;
 import records.ResponseException;
 import com.google.gson.Gson;
 import websocket.messages.*;
@@ -21,7 +20,8 @@ public class WebSocketFacade extends Endpoint {
     private String authToken;
     private ChessGame chessGame = null;
 
-    public WebSocketFacade(String url, String authToken, int gameID) throws ResponseException {
+    public WebSocketFacade(String url, String authToken, int gameID, ServerMessageHandler sh) throws ResponseException {
+        this.serverMessageHandler = sh;
         this.authToken = authToken;
         this.gameID = gameID;
         try {

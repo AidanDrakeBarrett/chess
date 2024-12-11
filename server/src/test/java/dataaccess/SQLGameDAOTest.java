@@ -1,6 +1,7 @@
 package dataaccess;
 
 import chess.ChessGame;
+import com.google.gson.Gson;
 import records.GameData;
 import records.AbbreviatedGameData;
 import org.junit.jupiter.api.AfterEach;

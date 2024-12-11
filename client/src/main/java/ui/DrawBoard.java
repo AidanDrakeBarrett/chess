@@ -6,7 +6,8 @@ import chess.ChessPosition;
 import java.util.HashSet;
 
 public class DrawBoard {
-    public static StringBuilder drawWhite(ChessPiece[][] board, HashSet<ChessPosition> legalEnds, ChessPosition start, StringBuilder view) {
+    public static StringBuilder drawWhite(ChessPiece[][] board, HashSet<ChessPosition> legalEnds, ChessPosition start,
+                                          StringBuilder view) {
         for (int i = 8; i >= 0; --i) {
             for (int j = 0; j < 9; ++j) {
                 if(start != null) {
@@ -103,7 +104,7 @@ public class DrawBoard {
             return "102;1m";
         }
         if((row % 2) != (col % 2)) {
-            return "47;1m";
+            return "107;1m";
         }
         return null;
     }
@@ -119,7 +120,7 @@ public class DrawBoard {
     }
     private static String pieceColorer(ChessPiece piece) {
         return switch (piece.getTeamColor()) {
-            case WHITE -> "\u001b[15;";
+            case WHITE -> "\u001b[37;";
             case BLACK -> "\u001b[30;";
         };
     }

@@ -76,7 +76,7 @@ public class ServerFacade {
             throw new RuntimeException("Error: please login to see a list of games.");
         }
     }
-    public WebSocketFacade join(int safeGameNumber, ChessGame.TeamColor color) throws RuntimeException {
+    public int join(int safeGameNumber, ChessGame.TeamColor color) throws RuntimeException {
         int gameID = safeGameIndex.get(safeGameNumber).gameID();
         try {
             if(color != null) {
@@ -85,8 +85,7 @@ public class ServerFacade {
                 String method = "PUT";
                 sendRequest(path, method, body, authToken, null);
             }
-            WebSocketFacade ws = new WebSocketFacade(serverURL, authToken, gameID);
-            return ws;
+            return gameID;
         } catch(ResponseException e) {
             if(e.getStatusCode() == 400) {
                 throw new RuntimeException("Error: game does not exist.");

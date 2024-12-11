@@ -1,6 +1,7 @@
 package ui;
 
 import chess.*;
+import com.google.gson.Gson;
 import records.*;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
@@ -8,6 +9,8 @@ import java.util.*;
 import static java.lang.Integer.parseInt;
 
 public class Client implements ServerMessageHandler {
+    private String url;
+    private String authToken;
     private final ServerFacade serverFacade;
     private WebSocketFacade ws = null;
     private UserState state;
@@ -22,6 +25,7 @@ public class Client implements ServerMessageHandler {
         MAY_RESIGN
     }
     public Client(String url) {
+        this.url = url;
         serverFacade = new ServerFacade(url);
         state = UserState.LOGGED_OUT;
     }
@@ -166,7 +170,7 @@ public class Client implements ServerMessageHandler {
         } catch(RuntimeException e) {
             return e.getMessage();
         }
-        return null;
+        return "";
     }
     public String register(String... params) throws RuntimeException {
         if(params.length >= 3) {
@@ -236,22 +240,24 @@ public class Client implements ServerMessageHandler {
                     position = "black";
                 }
             }
-            this.ws = serverFacade.join(gameNumber, color);
-            try {
-                ws.joinGame(UserGameCommand.CommandType.CONNECT);
-            } catch(Exception e) {
-                throw new RuntimeException("Error: failed to connect.");
-            }
-            if(color == ChessGame.TeamColor.WHITE) {
+            int gameID = serverFacade.join(gameNumber, color);
+            this.authToken = serverFacade.getAuth();
+            if("white".equals(position)) {
                 state = UserState.IN_GAME;
                 playerColor = ChessGame.TeamColor.WHITE;
             }
-            if(color == ChessGame.TeamColor.BLACK) {
+            if("black".equals(position)) {
                 state = UserState.IN_GAME;
                 playerColor = ChessGame.TeamColor.BLACK;
             }
-            if(color == null) {
+            if(!("white".equals(position)) && !("black".equals(position))) {
                 state = UserState.WATCHING;
+            }
+            try {
+                this.ws = new WebSocketFacade(url, authToken, gameID, this);
+                ws.joinGame(UserGameCommand.CommandType.CONNECT);
+            } catch(Exception e) {
+                throw new RuntimeException("Error: failed to connect.");
             }
             return String.format("joined game as " + position + "\n");
         }
@@ -265,14 +271,15 @@ public class Client implements ServerMessageHandler {
     }
     public String drawBoard(ChessPiece[][] board, HashSet<ChessPosition> legalEnds, ChessPosition start) {
         StringBuilder view = new StringBuilder();
-        if(playerColor == ChessGame.TeamColor.WHITE || state == UserState.WATCHING) {
-            view.append(DrawBoard.drawWhite(board, legalEnds, start, view));
+        view.append("\n");
+        if((playerColor == ChessGame.TeamColor.WHITE && state == UserState.IN_GAME) || state == UserState.WATCHING) {
+            DrawBoard.drawWhite(board, legalEnds, start, view);
         }
         if(state == UserState.WATCHING) {
             view.append("\u001b[39;49;0m\n");
         }
-        if(playerColor == ChessGame.TeamColor.BLACK || state == UserState.WATCHING) {
-            view.append(DrawBoard.drawBlack(board, legalEnds, start, view));
+        if((playerColor == ChessGame.TeamColor.BLACK && state == UserState.IN_GAME) || state == UserState.WATCHING) {
+            DrawBoard.drawBlack(board, legalEnds, start, view);
         }
         return view.toString();
     }
@@ -285,7 +292,7 @@ public class Client implements ServerMessageHandler {
             System.out.println(message.getMessage());
         }
         if(message.getServerMessageType() == ServerMessage.ServerMessageType.LOAD_GAME) {
-            this.game = message.getGame().chessGame();
+            this.game = new Gson().fromJson(message.getMessage(), ChessGame.class);
             System.out.print(redraw());
         }
         printPrompt();
@@ -319,7 +326,7 @@ public class Client implements ServerMessageHandler {
                 throw new RuntimeException("Error: unknown\n");
             }
         }
-        return null;
+        return "";
     }
     private ChessPiece.PieceType pieceParser(String piece) {
         return switch (piece) {
@@ -355,7 +362,7 @@ public class Client implements ServerMessageHandler {
                 ends.add(move.getEndPosition());
             }
             System.out.print(drawBoard(game.getBoard().getBoard(), ends, start));
-            return null;
+            return "";
         }
         throw new RuntimeException("Error: bad input\n");
     }
@@ -370,7 +377,7 @@ public class Client implements ServerMessageHandler {
         try {
             ws.resign();
             state = UserState.LOGGED_IN;
-            return null;
+            return "";
         } catch(Exception e) {
             throw new RuntimeException("Error: unknown\n");
         }
@@ -383,7 +390,7 @@ public class Client implements ServerMessageHandler {
         try {
             ws.leave();
             state = UserState.LOGGED_IN;
-            return null;
+            return "";
         } catch(Exception e) {
             throw new RuntimeException("Error: unknown");
         }

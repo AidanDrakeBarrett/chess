@@ -1,5 +1,5 @@
 package server;
-
+//I HOPE GOD MANIFESTS THIS ASSIGNMENT INTO AN INTELLIGENCE AND THEN FORMS THE INTELLIGENCE INTO A SPIRIT AND THEN PUTS THE SPIRIT IN A BODY AND CASTS IT INTO HELL TO BE PERPETUALLY, VIOLENTLY GANG RAPED IN ITS DEEPEST PITS BY DEMONS THAT HAVE TAKEN ON THE APPEARANCES OF ITS LOVED ONES
 import chess.*;
 import com.google.gson.Gson;
 import dataaccess.SQLAuthDAO;
@@ -40,18 +40,24 @@ public class WebSocketHandler {
         if(gateKeep(session, game, username, gameID)) {
             return;
         }
+        String black = game.blackUsername();
+        String white = game.whiteUsername();
+        ChessGame chessGame = game.chessGame();
+        String chessGameString = new Gson().toJson(chessGame);
 
         connections.add(gameID, username, session);
-        String userJoined;
-        if(gameDAO.getGame(gameID).blackUsername().equals(username)) {
-            userJoined = username + " joined the game as black\n";
-        } else if(gameDAO.getGame(gameID).whiteUsername().equals(username)) {
-            userJoined = username + " joined the game as white\n";
-        } else {
-            userJoined = username + " joined the game as an observer\n";
+        String userJoined = null;
+        if(black != null && black == username) {
+            userJoined = String.format("%s joined the game as black\n", username);
+        }
+        if(white != null && white == username) {
+            userJoined = String.format("%s joined the game as white\n", username);
+        }
+        if(userJoined == null) {
+            userJoined = String.format("%s joined the game as an observer\n", username);
         }
         ServerMessage joinNotice = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, userJoined);
-        ServerMessage gameLoad = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, game);
+        ServerMessage gameLoad = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, chessGameString);
         try {
             connections.broadcast(gameID, username, joinNotice);
             connections.sendToOne(username, gameLoad);
@@ -98,7 +104,9 @@ public class WebSocketHandler {
         }
 
         GameData updatedGame = gameDAO.getGame(gameID);
-        ServerMessage gameUpdate = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, updatedGame);
+        ChessGame chessGame = updatedGame.chessGame();
+        String chessGameString = new Gson().toJson(chessGame);
+        ServerMessage gameUpdate = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, chessGameString);
 
         StringBuilder aftermath = new StringBuilder(String.format("%s moved %s from %s to %s", username, movedPiece,
                 startingString, endingString));

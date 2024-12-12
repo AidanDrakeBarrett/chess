@@ -54,7 +54,7 @@ public class DrawBoard {
         for (int i = 0; i < 9; ++i) {
             for (int j = 8; j >= 0; --j) {
                 if (start != null) {
-                    ChessPosition highlight = new ChessPosition(i, j);
+                    ChessPosition highlight = new ChessPosition(i + 1, j + 1);
                     if (legalEnds.contains(highlight)) {
                         drawBlackView(i, j, true, false, view, board);
                     } else {

@@ -100,7 +100,7 @@ public class ChessGame {
             throw new InvalidMoveException("invalid move");
         }
         if(board.getPiece(start).getTeamColor() != teamTurn) {
-            throw new InvalidMoveException("invalid move");
+            throw new InvalidMoveException("Wait your turn\n");
         }
         HashSet<ChessMove> validMoves = (HashSet<ChessMove>) validMoves(start);
         if(!validMoves.isEmpty()) {

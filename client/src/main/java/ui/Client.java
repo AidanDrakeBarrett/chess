@@ -40,7 +40,9 @@ public class Client implements ServerMessageHandler {
             String line = scanner.nextLine();
             try {
                 result = eval(line);
-                System.out.print(result);
+                if(!result.isEmpty()) {
+                    System.out.print(result);
+                }
             } catch (Throwable e) {
                 var msg = e.toString();
                 System.out.print(msg);
@@ -100,6 +102,8 @@ public class Client implements ServerMessageHandler {
         if(state == UserState.WATCHING) {
             helpCommands.append("redraw\n");
             helpCommands.append("\tredraws the board\n");
+            helpCommands.append("legal <POSITION>\n");
+            helpCommands.append("\tenter a piece's position to see the places it can legally move be highlighted\n");
             helpCommands.append("leave\n");
             helpCommands.append("\tremoves you from the game without ending it\n");
             helpCommands.append("help\n");
@@ -138,11 +142,12 @@ public class Client implements ServerMessageHandler {
             if(state == UserState.WATCHING) {
                 return switch (cmd) {
                     case "redraw" -> redraw();
+                    case "legal" -> legalMoves(params);
                     case "leave" -> leave();
                     case "register", "login" -> "Error: you can not use that command while already logged in\n";
                     case "create", "list", "join", "observe", "quit", "logout" ->
                             "Error: please leave your current game first\n";
-                    case "move", "legal", "resign" -> "Error: only players can use those commands\n";
+                    case "move", "resign" -> "Error: only players can use that command\n";
                     default -> help();
                 };
             }
@@ -275,10 +280,7 @@ public class Client implements ServerMessageHandler {
         if((playerColor == ChessGame.TeamColor.WHITE && state == UserState.IN_GAME) || state == UserState.WATCHING) {
             DrawBoard.drawWhite(board, legalEnds, start, view);
         }
-        if(state == UserState.WATCHING) {
-            view.append("\u001b[39;49;0m\n");
-        }
-        if((playerColor == ChessGame.TeamColor.BLACK && state == UserState.IN_GAME) || state == UserState.WATCHING) {
+        if(playerColor == ChessGame.TeamColor.BLACK && state == UserState.IN_GAME) {
             DrawBoard.drawBlack(board, legalEnds, start, view);
         }
         return view.toString();
@@ -289,7 +291,7 @@ public class Client implements ServerMessageHandler {
             System.out.println(message.getMessage());
         }
         if(message.getServerMessageType() == ServerMessage.ServerMessageType.ERROR) {
-            System.out.println(message.getMessage());
+            System.out.println(message.getErrorMessage());
         }
         if(message.getServerMessageType() == ServerMessage.ServerMessageType.LOAD_GAME) {
             this.game = new Gson().fromJson(message.getMessage(), ChessGame.class);
@@ -303,7 +305,7 @@ public class Client implements ServerMessageHandler {
             String end = params[1];
             ChessPosition startPos = coordParser(start);
             if(game.getBoard().getPiece(startPos).getTeamColor() != playerColor) {
-                throw new RuntimeException("Error: %s is not your piece.\n");
+                throw new RuntimeException(String.format("Error: %s is not your piece.\n", start));
             }
             ChessPosition endPos = coordParser(end);
             ChessPiece.PieceType promotion = null;
@@ -376,7 +378,6 @@ public class Client implements ServerMessageHandler {
     public String resign() {
         try {
             ws.resign();
-            state = UserState.LOGGED_IN;
             return "";
         } catch(Exception e) {
             throw new RuntimeException("Error: unknown\n");

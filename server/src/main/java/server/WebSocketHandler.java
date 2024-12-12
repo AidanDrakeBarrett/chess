@@ -1,5 +1,4 @@
 package server;
-//I HOPE GOD MANIFESTS THIS ASSIGNMENT INTO AN INTELLIGENCE AND THEN FORMS THE INTELLIGENCE INTO A SPIRIT AND THEN PUTS THE SPIRIT IN A BODY AND CASTS IT INTO HELL TO BE PERPETUALLY, VIOLENTLY GANG RAPED IN ITS DEEPEST PITS BY DEMONS THAT HAVE TAKEN ON THE APPEARANCES OF ITS LOVED ONES
 import chess.*;
 import com.google.gson.Gson;
 import dataaccess.SQLAuthDAO;
@@ -47,10 +46,10 @@ public class WebSocketHandler {
 
         connections.add(gameID, username, session);
         String userJoined = null;
-        if(black != null && black == username) {
+        if(black != null && username.equals(black)) {
             userJoined = String.format("%s joined the game as black\n", username);
         }
-        if(white != null && white == username) {
+        if(white != null && username.equals(white)) {
             userJoined = String.format("%s joined the game as white\n", username);
         }
         if(userJoined == null) {
@@ -96,7 +95,7 @@ public class WebSocketHandler {
             gameDAO.updateBoard(gameID, theGame);
         } catch(InvalidMoveException e) {
             ServerMessage error = new ServerMessage(ServerMessage.ServerMessageType.ERROR);
-            error.setErrorMessage(e.getMessage());
+            error.setErrorMessage("Error: move is invalid");
             try {
                 connections.sendToOne(username, error);
             } catch(IOException ex) {}
@@ -104,42 +103,50 @@ public class WebSocketHandler {
         }
 
         GameData updatedGame = gameDAO.getGame(gameID);
+        String whiteUser = updatedGame.whiteUsername();
+        String blackUser = updatedGame.blackUsername();
         ChessGame chessGame = updatedGame.chessGame();
         String chessGameString = new Gson().toJson(chessGame);
         ServerMessage gameUpdate = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, chessGameString);
 
-        StringBuilder aftermath = new StringBuilder(String.format("%s moved %s from %s to %s", username, movedPiece,
+        StringBuilder moveMessage = new StringBuilder(String.format("%s moved %s from %s to %s", username, movedPiece,
                 startingString, endingString));
         if(move.getPromotionPiece() != null) {
-            aftermath.append(String.format(" and promoted it to %s", pieceName(move.getPromotionPiece())));
+            moveMessage.append(String.format(" and promoted it to %s", pieceName(move.getPromotionPiece())));
         }
-        aftermath.append(".\n");
+        moveMessage.append(".\n");
+        StringBuilder aftermath = new StringBuilder();
         if(wCheckmate) {
-            aftermath.append("White is in checkmate.\n");
+            aftermath.append(String.format("%s/white is in checkmate.\n", whiteUser));
             gameDAO.endGame(gameID);
         }
         if(bCheckmate) {
-            aftermath.append("Black is in checkmate.\n");
+            aftermath.append(String.format("%s/black is in checkmate.\n", blackUser));
             gameDAO.endGame(gameID);
         }
         if(!wCheckmate && !bCheckmate) {
             if(wCheck) {
-                aftermath.append("White is in check.\n");
+                aftermath.append(String.format("%s/white is in check.\n", whiteUser));
             }
             if(bCheck) {
-                aftermath.append("Black is in check.\n");
+                aftermath.append(String.format("%s/black is in check.\n", blackUser));
             }
             if(wStalemate && bStalemate) {
                 aftermath.append("The game is in stalemate.\n");
                 gameDAO.endGame(gameID);
             }
         }
-        ServerMessage aftermathMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION,
-                aftermath.toString());
+        ServerMessage announceMoveMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION,
+                moveMessage.toString());
 
         try {
             connections.broadcast(gameID, null, gameUpdate);
-            connections.broadcast(gameID, username, aftermathMessage);
+            connections.broadcast(gameID, username, announceMoveMessage);
+            if(!aftermath.isEmpty()) {
+                ServerMessage aftermathMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION,
+                        aftermath.toString());
+                connections.broadcast(gameID, null, aftermathMessage);
+            }
         } catch(IOException e) {}
     }
     private String pieceName(ChessPiece.PieceType piece) {

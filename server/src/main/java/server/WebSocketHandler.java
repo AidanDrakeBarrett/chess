@@ -201,7 +201,6 @@ public class WebSocketHandler {
             connections.broadcast(gameID, username, resignation);
             connections.sendToOne(username, acceptance);
         } catch(IOException e) {}
-        connections.remove(username);
     }
     private void leave(Session session, String authToken, int gameID) {
         String username = authDAO.getUsername(authToken);
